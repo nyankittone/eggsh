@@ -12,44 +12,67 @@
 #define VECTOR_GROW_MULTIPLIER (1.5)
 #define INITIAL_TOKENS_CAPACITY (4096)
 #define INITIAL_TREE_CAPACITY (32)
+#define INITIAL_CMDLINE_CAPACITY (64)
 
 typedef struct {
     size_t bytes_written, capacity;
     char *ptr;
-} TokensAndTree;
+} TokenInfo;
+
+typedef struct {
+    size_t capacity;
+    char **ptr;
+} CommandLineSpace;
 
 // TODO: Add a tree data structure in here when it's time for getting an AST working.
 typedef struct {
+    void *arena_ptr;
 
     // TODO: Expand the auxilliary array here to also include the syntax tree once one is needed.
-    TokensAndTree tokens;
+    TokenInfo tokens;
+    CommandLineSpace command_line;
 
-    u32 total_tokens;
+    u32 total_tokens; // TODO: move this to be a in a struct within an entry of the tree
     char *remaining;
     size_t remaining_length;
 
     bool scanning_word;
 } CommandBuilder;
 
+static CommandBuilder *reallocCommandBuilder(CommandBuilder *const builder) {
+    assert(builder != NULL);
+
+    builder->arena_ptr = reallocOrDie (
+        builder->arena_ptr,
+        builder->command_line.capacity * sizeof(char*) + builder->tokens.capacity
+    );
+
+    builder->command_line.ptr = (char**) builder->arena_ptr;
+    builder->tokens.ptr = ((char*) builder->arena_ptr) + builder->command_line.capacity * sizeof(char*);
+
+    return builder;
+}
+
 CommandBuilder newCommandBuilder(void) {
     CommandBuilder returned = {0};
-    returned.tokens.ptr = mallocOrDie(INITIAL_TOKENS_CAPACITY);
     returned.tokens.capacity = INITIAL_TOKENS_CAPACITY;
+    returned.command_line.capacity = INITIAL_CMDLINE_CAPACITY;
     returned.tokens.bytes_written = 0;
 
+    reallocCommandBuilder(&returned);
     return returned;
 }
 
 CommandBuilder *nukeCommandBuilder(CommandBuilder *const builder) {
     assert(builder != NULL);
-
-    if(builder->tokens.ptr) free(builder->tokens.ptr);
+    if(builder->arena_ptr) free(builder->arena_ptr);
 
     *builder = (CommandBuilder) {0};
-    builder->tokens = (TokensAndTree) {0}; // idk if this line is even nessesary??? It's just here
-                                           // in case tokens doesn't get zero-filled by the above
-                                           // line.
+    builder->tokens = (TokenInfo) {0}; // idk if this line is even nessesary??? It's just here
+                                       // in case tokens doesn't get zero-filled by the above
+                                       // line.
 
+    builder->command_line = (CommandLineSpace) {0};
     return builder;
 }
 
@@ -172,16 +195,19 @@ typedef struct {
 
 #define NO_EXIT_STATUS (ExitStatus){.program_exited = false, .exit_code = 0}
 
-ExitStatus runCommand(const CommandBuilder *const builder) {
+ExitStatus runCommand(CommandBuilder *const builder) {
     assert(builder != NULL);
 
-    // I can put it on the stack if I use a VLA. Surely this won't cause any stack overflow issues.
-    char *command_line[builder->total_tokens + 1];
-    command_line[builder->total_tokens] = NULL;
+    if(builder->total_tokens >= builder->command_line.capacity) {
+        builder->command_line.capacity = builder->total_tokens + 1;
+        reallocCommandBuilder(builder);
+    }
 
+    builder->command_line.ptr[builder->total_tokens] = NULL;
     char *token = builder->tokens.ptr;
+
     for(u32 i = 0; i < builder->total_tokens; i++) {
-        command_line[i] = token;
+        builder->command_line.ptr[i] = token;
         token += strlen(token) + 1;
     }
 
@@ -191,7 +217,7 @@ ExitStatus runCommand(const CommandBuilder *const builder) {
             fputs("oops something went wrong and I didn't feel like doing error handling lmao\n", stderr);
             return NO_EXIT_STATUS;
         case 0:
-            execv(command_line[0], command_line);
+            execv(builder->command_line.ptr[0], builder->command_line.ptr);
             perror("Failed to exec");
             exit(255);
     }
@@ -210,6 +236,8 @@ int main(void) {
     addToToken(&cmd, "-al", 3);
     newToken(&cmd);
     addToToken(&cmd, "/", 1);
+    newToken(&cmd);
+    addToToken(&cmd, "--color", 7);
     newToken(&cmd);
 
     ExitStatus exit_stuff = runCommand(&cmd);
