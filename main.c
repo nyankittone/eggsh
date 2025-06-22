@@ -32,7 +32,7 @@ typedef struct {
     TokenInfo tokens;
     CommandLineSpace command_line;
 
-    u32 total_tokens; // TODO: move this to be a in a struct within an entry of the tree
+    u32 total_tokens; // TODO: move this to be in a struct within an entry of the tree
     char *remaining;
     size_t remaining_length;
 
@@ -305,25 +305,7 @@ void runFile(int file_descriptor) {
 }
 
 int main(void) {
-    // CommandBuilder cmd = newCommandBuilder();
-    //
-    // char cmd_string[] = "/bin/ls -Al / --color=auto";
-    // setParserInput(&cmd, cmd_string, sizeof(cmd_string));
-    // TokenizeCommandReturn parse_status = tokenizeBuilderInput(&cmd);
-    // if(parse_status == PARSE_COMMAND_OUT_OF_DATA) newToken(&cmd);
-    //
-    // ExitStatus exit_stuff = runCommand(&cmd);
-    // nukeCommandBuilder(&cmd);
-    //
-    // int exit_code = 1;
-    // if(!exit_stuff.program_exited) {
-    //     fputs("no program was executed.\n", stderr);
-    // } else {
-    //     exit_code = exit_stuff.exit_code;
-    // }
-
     runFile(STDIN_FILENO);
-
     return 0;
 }
 
