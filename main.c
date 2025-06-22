@@ -82,7 +82,7 @@ static CommandBuilder *addToToken(CommandBuilder *const builder, const char *con
     // check if there will be a buffer overflow, and if so, re-allocate the array.
     if(builder->tokens.bytes_written + length > builder->tokens.capacity) {
         builder->tokens.capacity *= VECTOR_GROW_MULTIPLIER;
-        builder->tokens.ptr = reallocOrDie(builder->tokens.ptr, builder->tokens.capacity);
+        reallocCommandBuilder(builder);
     }
 
     // append the string data in question, nyaaah~
@@ -108,6 +108,17 @@ CommandBuilder *setParserInput(CommandBuilder *builder, char *string, size_t len
     return builder;
 }
 
+CommandBuilder *newCommand(CommandBuilder *const builder) {
+    assert(builder != NULL);
+
+    // TODO: Have this function handle shrinking the memory arena if the vibes for its size are
+    // off.
+    builder->total_tokens = 0;
+    builder->tokens.bytes_written = 0;
+
+    return builder;
+}
+
 typedef u8 TokenizeCommandReturn;
 #define PARSE_COMMAND_NORMAL (0)
 #define PARSE_COMMAND_OUT_OF_DATA (1)
@@ -120,9 +131,11 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
     assert(builder != NULL);
     if(builder->remaining_length == 0) return PARSE_COMMAND_OUT_OF_DATA;
 
+    TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
+
     #define INCRIMENT_REMAINING \
         builder->remaining++; \
-        if(!(--builder->remaining_length)) return PARSE_COMMAND_OUT_OF_DATA;
+        if(!(--builder->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
 
     // TODO: Consider adding a macro for incrimenting this builder pointer.
     // scan through remaining segment of remaining byte-by-byte.
@@ -134,6 +147,10 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
                 case '\t':
                     INCRIMENT_REMAINING
                     continue;
+                case '\n':
+                    returned |= PARSE_COMMAND_HIT_NEWLINE;
+                    INCRIMENT_REMAINING
+                    return returned;
             }
 
             break;
@@ -141,18 +158,26 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
 
         builder->scanning_word = true;
 
-        INCRIMENT_REMAINING
+        // INCRIMENT_REMAINING
     }
 
     while(true) {
         while(true) {
-            if(*builder->remaining == '\0') {
-                INCRIMENT_REMAINING
-                continue;
+            switch(*builder->remaining) {
+                case '\0':
+                    INCRIMENT_REMAINING
+                    continue;
+                case '\n':
+                    // Add logic to add characters here
+                    newToken(builder);
+                    returned |= PARSE_COMMAND_HIT_NEWLINE;
+                    INCRIMENT_REMAINING
+                    return returned;
             }
 
             if(*builder->remaining != ' ' && *builder->remaining != '\t') {
-                // Add logic to add characters here
+                // Add GOOD logic to add characters here
+                addToToken(builder, builder->remaining, 1);
 
                 INCRIMENT_REMAINING
                 continue;
@@ -162,6 +187,7 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
         }
 
         builder->scanning_word = false;
+        newToken(builder);
 
         INCRIMENT_REMAINING
 
@@ -172,6 +198,10 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
                 case '\t':
                     INCRIMENT_REMAINING
                     continue;
+                case '\n':
+                    returned |= PARSE_COMMAND_HIT_NEWLINE;
+                    INCRIMENT_REMAINING
+                    return returned;
             }
 
             break;
@@ -179,7 +209,7 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
 
         builder->scanning_word = true;
 
-        INCRIMENT_REMAINING
+        // INCRIMENT_REMAINING
 
     }
 
@@ -228,28 +258,72 @@ ExitStatus runCommand(CommandBuilder *const builder) {
     return (ExitStatus) {true, WEXITSTATUS(exit_info)};
 }
 
-int main(void) {
+void runFile(int file_descriptor) {
+    // assert that the file passed in is valid
+    // check if the input file descriptor is connected to a TTY. If yes, run in interactive mode.
+
+    #define READ_BUFFER_SIZE (64)
+
     CommandBuilder cmd = newCommandBuilder();
-    addToToken(&cmd, "/bin/l", 6);
-    addToToken(&cmd, "s", 1);
-    newToken(&cmd);
-    addToToken(&cmd, "-al", 3);
-    newToken(&cmd);
-    addToToken(&cmd, "/", 1);
-    newToken(&cmd);
-    addToToken(&cmd, "--color", 7);
-    newToken(&cmd);
 
-    ExitStatus exit_stuff = runCommand(&cmd);
-    nukeCommandBuilder(&cmd);
+    char buffer[READ_BUFFER_SIZE];
+    ssize_t buffer_length;
 
-    int exit_code = 1;
-    if(!exit_stuff.program_exited) {
-        fputs("no program was executed.\n", stderr);
-    } else {
-        exit_code = exit_stuff.exit_code;
+    while(true) {
+        // read from file
+        fputs("> ", stderr);
+        buffer_length = read(file_descriptor, buffer, READ_BUFFER_SIZE);
+        if(!buffer_length) break; // A buffer length of zero means we hit EOF
+
+        // add text read to builder for processing
+        setParserInput(&cmd, buffer, buffer_length);
+
+        // process it
+        // do this in a loop until we get a signal saying we hit a newline
+        while(true) {
+            TokenizeCommandReturn result = tokenizeBuilderInput(&cmd);
+            if(result & PARSE_COMMAND_HIT_NEWLINE) {
+                break;
+            }
+
+            if(result & PARSE_COMMAND_OUT_OF_DATA) {
+                buffer_length = read(file_descriptor, buffer, READ_BUFFER_SIZE);
+                setParserInput(&cmd, buffer, buffer_length);
+
+                continue;
+            }
+        }
+
+        // run a command
+        runCommand(&cmd);
+        newCommand(&cmd);
     }
 
-    return exit_code;
+    nukeCommandBuilder(&cmd);
+
+    #undef READ_BUFFER_SIZE
+}
+
+int main(void) {
+    // CommandBuilder cmd = newCommandBuilder();
+    //
+    // char cmd_string[] = "/bin/ls -Al / --color=auto";
+    // setParserInput(&cmd, cmd_string, sizeof(cmd_string));
+    // TokenizeCommandReturn parse_status = tokenizeBuilderInput(&cmd);
+    // if(parse_status == PARSE_COMMAND_OUT_OF_DATA) newToken(&cmd);
+    //
+    // ExitStatus exit_stuff = runCommand(&cmd);
+    // nukeCommandBuilder(&cmd);
+    //
+    // int exit_code = 1;
+    // if(!exit_stuff.program_exited) {
+    //     fputs("no program was executed.\n", stderr);
+    // } else {
+    //     exit_code = exit_stuff.exit_code;
+    // }
+
+    runFile(STDIN_FILENO);
+
+    return 0;
 }
 
