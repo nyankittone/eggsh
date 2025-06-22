@@ -199,3 +199,14 @@ ExitStatus runCommand(CommandBuilder *const builder) {
     return (ExitStatus) {true, WEXITSTATUS(exit_info)};
 }
 
+CommandBuilder *newCommand(CommandBuilder *const builder) {
+    assert(builder != NULL);
+
+    // TODO: Have this function handle shrinking the memory arena if the vibes for its size are
+    // off.
+    builder->total_tokens = 0;
+    builder->tokens.bytes_written = 0;
+
+    return builder;
+}
+
