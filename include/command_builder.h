@@ -27,6 +27,8 @@ typedef struct {
     CommandLineSpace command_line;
 
     u32 total_tokens; // TODO: move this to be in a struct within an entry of the tree
+
+    char *lagged_remaining;
     char *remaining;
     size_t remaining_length;
 
