@@ -147,7 +147,7 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
         newToken(builder);
 
         INCRIMENT_REMAINING
-        builder->lagged_remaining = builder->remaining; // 
+        builder->lagged_remaining = builder->remaining;
 
         while(true) {
             switch(*builder->remaining) {
@@ -166,6 +166,7 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
         }
 
         builder->scanning_word = true;
+        builder->lagged_remaining = builder->remaining;
     }
 
     return PARSE_COMMAND_NORMAL;
