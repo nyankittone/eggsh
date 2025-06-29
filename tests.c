@@ -24,7 +24,7 @@ int main(void) {
         return CU_get_error();
     }
 
-    if(CU_add_test(eggsh_suite, "One token", &token_test_one) == NULL) {
+    if(!CU_add_test(eggsh_suite, "One token", &token_test_one)) {
         CU_cleanup_registry();
         return CU_get_error();
     }
