@@ -126,6 +126,16 @@ void token_test_two_inputs(void) {
     CU_ASSERT_STRING_EQUAL(string4, "CCC");
 }
 
+void token_test_leading_whitespace(void) {
+    static char input[] = "          \t     bruh\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    CU_ASSERT_EQUAL(cmd.total_tokens, 1);
+    CU_ASSERT_STRING_EQUAL(cmd.tokens.ptr, "bruh");
+}
+
 int main(void) {
     // Tests to run:
     // Tokenizer tests
@@ -145,7 +155,8 @@ int main(void) {
         !CU_add_test(eggsh_suite, "Three tokens with null bytes", &token_test_null_bytes) ||
         !CU_add_test(eggsh_suite, "Two tokens with extra space", &token_test_extra_space) ||
         !CU_add_test(eggsh_suite, "Two commands", &token_test_two_commands) ||
-        !CU_add_test(eggsh_suite, "Two inputs, one command", &token_test_two_inputs)
+        !CU_add_test(eggsh_suite, "Two inputs, one command", &token_test_two_inputs) ||
+        !CU_add_test(eggsh_suite, "Leading whitespace", &token_test_extra_space)
     ) {
         CU_cleanup_registry();
         return CU_get_error();
