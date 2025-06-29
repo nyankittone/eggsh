@@ -18,6 +18,12 @@ $(program_name): $(objects) $(program_name).o
 $(program_name).o: main.c
 	$(CC) -c $< $(CFLAGS) -o $@
 
+tests: $(objects) tests.o
+	$(CC) $^ $(CFLAGS) -lcunit -o $@
+
+tests.o: tests.c
+	$(CC) -c $< $(CFLAGS) -o $@
+
 $(object_dir)/%.o: $(source_dir)/%.c | $(object_dir)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -25,5 +31,5 @@ $(object_dir):
 	mkdir $@
 
 clean:
-	rm -rf *.o $(object_dir) $(program_name)
+	rm -rf *.o $(object_dir) $(program_name) tests result
 

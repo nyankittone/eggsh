@@ -1,4 +1,6 @@
 *.o
 /obj
 /eggsh
+/tests
+/result
 

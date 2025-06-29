@@ -14,6 +14,9 @@ static CommandBuilder *reallocCommandBuilder(CommandBuilder *const builder) {
         builder->command_line.capacity * sizeof(char*) + builder->tokens.capacity
     );
 
+    // TODO: memmove all the major parts of the memory arena as to avoid stupid problems.
+    // (important)
+
     builder->command_line.ptr = (char**) builder->arena_ptr;
     builder->tokens.ptr = ((char*) builder->arena_ptr) + builder->command_line.capacity * sizeof(char*);
 
