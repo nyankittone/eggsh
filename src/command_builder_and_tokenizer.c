@@ -135,7 +135,14 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
             if(*builder->remaining != ' ' && *builder->remaining != '\t') {
                 // Add GOOD logic to add characters here
 
-                INCRIMENT_REMAINING
+                // INCRIMENT_REMAINING macro couldn't be used here. This mightr be a sign I should
+                // make a refactor here. Or maybe all of the tokenizer code. Who knows?
+                builder->remaining++;
+                if(!(--builder->remaining_length)) {
+                    addToToken(builder, builder->lagged_remaining, builder->remaining - builder->lagged_remaining);
+                    return returned | PARSE_COMMAND_OUT_OF_DATA;
+                }
+
                 continue;
             }
 
