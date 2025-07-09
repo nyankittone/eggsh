@@ -23,6 +23,8 @@
 //
 // For more information, please refer to <http://unlicense.org/>
 
+#pragma once
+
 #include <stdbool.h>
 #include <stdint.h>
 
