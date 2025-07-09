@@ -181,21 +181,32 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
     #undef INCRIMENT_REMAINING
 }
 
-ExitStatus runCommand(CommandBuilder *const builder) {
+char **prepareExec(CommandBuilder *const builder) {
     assert(builder != NULL);
 
+    // Reallocate the command-line space if that is needed
     if(builder->total_tokens >= builder->command_line.capacity) {
         builder->command_line.capacity = builder->total_tokens + 1;
         reallocCommandBuilder(builder);
     }
 
+    // Initialize our traveller pointer for going through the tokens in the arena
     builder->command_line.ptr[builder->total_tokens] = NULL;
     char *token = builder->tokens.ptr;
 
+    // Creating the pointer values in the array we're going to return
     for(u32 i = 0; i < builder->total_tokens; i++) {
         builder->command_line.ptr[i] = token;
         token += strlen(token) + 1;
     }
+    
+    return builder->command_line.ptr;
+}
+
+ExitStatus runCommand(CommandBuilder *const builder) {
+    assert(builder != NULL);
+
+    prepareExec(builder);
 
     pid_t child = fork();
     switch(child) {

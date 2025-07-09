@@ -89,6 +89,8 @@ typedef u8 TokenizeCommandReturn;
 
 TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder);
 
+char **prepareExec(CommandBuilder *const builder);
+
 typedef struct {
     bool program_exited;
     u8f exit_code;
