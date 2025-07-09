@@ -1,7 +1,8 @@
-#include <stddef.h>
 #include <assert.h>
+#include <stddef.h>
 
 #include <hash_map.h>
+#include <string.h>
 
 HashMap newHashMap(KeyValuePair *const array, u32 array_size, u32 *const final_array_size) {
     assert(array != NULL && array_size > 0);
@@ -17,6 +18,10 @@ HashMap newHashMap(KeyValuePair *const array, u32 array_size, u32 *const final_a
     bitmask = (~bitmask) >> 1;
     returned.bitmask = bitmask;
 
+    u32 staged_final_array_size = bitmask + 1;
+    memset(array, 0, sizeof(*array) * staged_final_array_size);
+
+    if(final_array_size) *final_array_size = staged_final_array_size;
     return returned;
 }
 
