@@ -1,6 +1,6 @@
 {pkgs ? import <nixpkgs> {}}:
 let
-  inherit (pkgs) stdenv cunit clang-tools;
+  inherit (pkgs) stdenv cunit clang-tools check;
 in
 stdenv.mkDerivation {
   pname = "eggsh";
@@ -10,6 +10,7 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     cunit
+    check
     clang-tools
   ];
 
