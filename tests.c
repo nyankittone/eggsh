@@ -64,18 +64,6 @@ void map_test_remove(void) {
     CU_ASSERT_EQUAL(*((int*)getFromMap(&map, "C")), 69);
 }
 
-START_TEST(token_test_one) {
-    static char input[] = "hewwo\n";
-
-    CommandBuilder cmd = newCommandBuilder();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
-
-    // CU_ASSERT_EQUAL(cmd.total_tokens, 1);
-    // CU_ASSERT(!strcmp(cmd.tokens.ptr, "hewwo"));
-    ck_assert_uint_eq(cmd.total_tokens, 1);
-    ck_assert_str_eq(cmd.tokens.ptr, "hewwo");
-} END_TEST
-
 void token_test_one_broken(void) {
     static char input[] = "meow";
 
@@ -196,21 +184,8 @@ void token_test_leading_whitespace(void) {
     CU_ASSERT_STRING_EQUAL(cmd.tokens.ptr, "bruh");
 }
 
-Suite *tokenizerSuite(void) {
-    Suite *returned;
-    TCase *test_case_core;
-
-    returned = suite_create("Tokenizer");
-    test_case_core = tcase_create("Core");
-
-    tcase_add_test(test_case_core, token_test_one);
-    suite_add_tcase(returned, test_case_core);
-
-    return returned;
-}
-
 int main(void) {
-    Suite *suite = tokenizerSuite();
+    Suite *suite = tests_tokenizerSuite();
     SRunner *suite_runner = srunner_create(suite);
 
     srunner_run_all(suite_runner, CK_VERBOSE);

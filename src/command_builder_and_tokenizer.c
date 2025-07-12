@@ -4,6 +4,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#ifdef RUN_TESTS
+    #include <check.h>
+#endif
+
 #include <command_builder.h>
 
 static CommandBuilder *reallocCommandBuilder(CommandBuilder *const builder) {
@@ -236,3 +240,27 @@ CommandBuilder *newCommand(CommandBuilder *const builder) {
     return builder;
 }
 
+#ifdef RUN_TESTS
+START_TEST(token_test_one) {
+    static char input[] = "hewwo\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 1);
+    ck_assert_str_eq(cmd.tokens.ptr, "hewwo");
+} END_TEST
+
+Suite *tests_tokenizerSuite(void) {
+    Suite *returned;
+    TCase *test_case_core;
+
+    returned = suite_create("Tokenizer");
+    test_case_core = tcase_create("Integration");
+
+    tcase_add_test(test_case_core, token_test_one);
+    suite_add_tcase(returned, test_case_core);
+
+    return returned;
+}
+#endif

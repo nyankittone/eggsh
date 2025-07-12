@@ -1,6 +1,6 @@
 CC := cc
 CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude
-test_flags := -lcunit -lcheck -DDO_TESTS
+test_flags := -lcunit -lcheck -DRUN_TESTS
 
 program_name := eggsh
 source_dir := src

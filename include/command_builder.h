@@ -4,6 +4,10 @@
 #include <rusttypes.h>
 #include <vector_info.h>
 
+#ifdef RUN_TESTS
+    #include <check.h>
+#endif
+
 // This is how large the section in the memory arena for storing the command line tokens is
 // initially, in bytes. The size is prone to growing if needed.
 #define INITIAL_TOKENS_CAPACITY (4096)
@@ -98,4 +102,8 @@ typedef struct {
 
 #define NO_EXIT_STATUS (ExitStatus){.program_exited = false, .exit_code = 0}
 ExitStatus runCommand(CommandBuilder *const builder);
+
+#ifdef RUN_TESTS
+Suite *tests_tokenizerSuite(void);
+#endif
 
