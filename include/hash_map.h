@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef RUN_TESTS
+    #include <check.h>
+#endif
+
 #include <rusttypes.h>
 
 // This is my first-ever attempt at making a hash map in C. I'm doing it from scratch here instead
@@ -44,4 +48,9 @@ HashMap *removeFromMap(HashMap *const map, const char *const key);
 // This function clears out all of the key-value pairs in the underlying array for the hash map,
 // and also de-allocates any additional memory that was allocated by adding entries.
 HashMap *wipeMap(HashMap *const map);
+
+// Exposing function for addding a test suite for this hash map.
+#ifdef RUN_TESTS
+Suite *tests_hashMapSuite(void);
+#endif
 

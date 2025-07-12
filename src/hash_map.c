@@ -1,12 +1,12 @@
 #define _XOPEN_SOURCE 500
 
-#include "command_builder.h"
 #include <assert.h>
 #include <stddef.h>
-
-#include <hash_map.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <hash_map.h>
+#include <util.h>
 
 HashMap newHashMap(KeyValuePair *const array, u32 array_size, u32 *const final_array_size) {
     assert(array != NULL && array_size > 0);
@@ -180,4 +180,78 @@ HashMap *wipeMap(HashMap *const map) {
 
     return map;
 }
+
+#ifdef RUN_TESTS
+#define HASH_MAP_TEST_SIZE (256)
+
+START_TEST(map_test_put_one) {
+    int value = 1337;
+    KeyValuePair array[HASH_MAP_TEST_SIZE];
+    HashMap map = newHashMap(array, HASH_MAP_TEST_SIZE, NULL);
+
+    putInMap(&map, "bees", (void*) &value);
+    ck_assert_int_eq(*((int*)getFromMap(&map, "bees")), 1337);
+} END_TEST
+
+START_TEST(map_test_put_none) {
+    KeyValuePair array[HASH_MAP_TEST_SIZE];
+    HashMap map = newHashMap(array, HASH_MAP_TEST_SIZE, NULL);
+
+    ck_assert_ptr_null(getFromMap(&map, "bees"));
+} END_TEST
+
+START_TEST(map_test_put_many) {
+    int values[] = {1337, 420, 69, 1984, 1738, 5318008, 80085, 2};
+    KeyValuePair array[HASH_MAP_TEST_SIZE];
+    HashMap map = newHashMap(array, HASH_MAP_TEST_SIZE, NULL);
+
+    putInMap(&map, "bees", (void*) values);
+    putInMap(&map, "bang", (void*) (values + 1));
+    putInMap(&map, "boom", (void*) (values + 2));
+    putInMap(&map, "damn", (void*) (values + 3));
+    putInMap(&map, "woah mama!", (void*) (values + 4));
+    putInMap(&map, "j", (void*) (values + 5));
+    putInMap(&map, "gaming", (void*) (values + 6));
+    putInMap(&map, "your mom is critically overweight", (void*) (values + 7));
+
+    ck_assert_int_eq(*((int*) getFromMap(&map, "bees")), 1337);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "bang")), 420);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "boom")), 69);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "damn")), 1984);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "woah mama!")), 1738);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "j")), 5318008);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "gaming")), 80085);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "your mom is critically overweight")), 2);
+} END_TEST
+
+START_TEST(map_test_remove) {
+    int values[] = {1337, 420, 69};
+    KeyValuePair array[HASH_MAP_TEST_SIZE];
+    HashMap map = newHashMap(array, HASH_MAP_TEST_SIZE, NULL);
+
+    putInMap(&map, "A", (void*) values);
+    putInMap(&map, "B", (void*) (values + 1));
+    putInMap(&map, "C", (void*) (values + 2));
+    removeFromMap(&map, "B");
+
+    ck_assert_int_eq(*((int*)getFromMap(&map, "A")), 1337);
+    ck_assert_ptr_null(getFromMap(&map, "B"));
+    ck_assert_int_eq(*((int*)getFromMap(&map, "C")), 69);
+} END_TEST
+
+Suite *tests_hashMapSuite(void) {
+    Suite *returned = suite_create("Hash Map");
+    TCase *integ = tcase_create("HashMap Integration");
+
+    tcase_add_test(integ, map_test_put_one);
+    tcase_add_test(integ, map_test_put_none);
+    tcase_add_test(integ, map_test_put_many);
+    tcase_add_test(integ, map_test_remove);
+
+    suite_add_tcase(returned, integ);
+    return returned;
+}
+
+#undef HASH_MAP_TEST_SIZE
+#endif
 
