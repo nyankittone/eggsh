@@ -251,6 +251,126 @@ START_TEST(token_test_one) {
     ck_assert_str_eq(cmd.tokens.ptr, "hewwo");
 } END_TEST
 
+START_TEST(token_test_one_broken) {
+    static char input[] = "meow";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 0);
+} END_TEST
+
+START_TEST(token_test_many) {
+    static char input[] = "echo Hello, world!\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 3);
+
+    const char *string1 = cmd.tokens.ptr;
+    const char *string2 = string1 + strlen(string1) + 1;
+    const char *string3 = string2 + strlen(string2) + 1;
+
+    ck_assert_str_eq(string1, "echo");
+    ck_assert_str_eq(string2, "Hello,");
+    ck_assert_str_eq(string3, "world!");
+} END_TEST
+
+START_TEST(token_test_null_bytes) {
+    static char input[] = "ech\0o He\0\0ya! :""\0""3\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 3);
+
+    const char *string1 = cmd.tokens.ptr;
+    const char *string2 = string1 + strlen(string1) + 1;
+    const char *string3 = string2 + strlen(string2) + 1;
+
+    ck_assert_str_eq(string1, "echo");
+    ck_assert_str_eq(string2, "Heya!");
+    ck_assert_str_eq(string3, ":3");
+} END_TEST
+
+START_TEST(token_test_extra_space) {
+    static char input[] = "echo    meow\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 2);
+
+    const char *string1 = cmd.tokens.ptr;
+    const char *string2 = string1 + strlen(string1) + 1;
+
+    ck_assert_str_eq(string1, "echo");
+    ck_assert_str_eq(string2, "meow");
+} END_TEST
+
+START_TEST(token_test_two_commands) {
+    static char input1[] = "echo AAA\n";
+    static char input2[] = "echo BBB CCC\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input1, sizeof(input1) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 2);
+
+    const char *string1 = cmd.tokens.ptr;
+    const char *string2 = string1 + strlen(string1) + 1;
+
+    ck_assert_str_eq(string1, "echo");
+    ck_assert_str_eq(string2, "AAA");
+
+    tokenizeBuilderInput(setParserInput(newCommand(&cmd), input2, sizeof(input2) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 3);
+
+    string1 = cmd.tokens.ptr;
+    string2 = string1 + strlen(string1) + 1;
+    const char *string3 = string2 + strlen(string2) + 1;
+
+    ck_assert_str_eq(string1, "echo");
+    ck_assert_str_eq(string2, "BBB");
+    ck_assert_str_eq(string3, "CCC");
+} END_TEST
+
+START_TEST(token_test_two_inputs) {
+    static char input1[] = "echo AAA";
+    static char input2[] = " BBB CCC\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    TokenizeCommandReturn code = tokenizeBuilderInput(setParserInput(&cmd, input1, sizeof(input1) - 1));
+    ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA);
+
+    code = tokenizeBuilderInput(setParserInput(&cmd, input2, sizeof(input2) - 1));
+    ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA | PARSE_COMMAND_HIT_NEWLINE);
+
+    ck_assert_uint_eq(cmd.total_tokens, 4);
+
+    const char *string1 = cmd.tokens.ptr;
+    const char *string2 = string1 + strlen(string1) + 1;
+    const char *string3 = string2 + strlen(string2) + 1;
+    const char *string4 = string3 + strlen(string3) + 1;
+
+    ck_assert_str_eq(string1, "echo");
+    ck_assert_str_eq(string2, "AAA");
+    ck_assert_str_eq(string3, "BBB");
+    ck_assert_str_eq(string4, "CCC");
+} END_TEST
+
+START_TEST(token_test_leading_whitespace) {
+    static char input[] = "          \t     bruh\n";
+
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    ck_assert_uint_eq(cmd.total_tokens, 1);
+    ck_assert_str_eq(cmd.tokens.ptr, "bruh");
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -259,6 +379,14 @@ Suite *tests_tokenizerSuite(void) {
     test_case_core = tcase_create("Integration");
 
     tcase_add_test(test_case_core, token_test_one);
+    tcase_add_test(test_case_core, token_test_one_broken);
+    tcase_add_test(test_case_core, token_test_many);
+    tcase_add_test(test_case_core, token_test_null_bytes);
+    tcase_add_test(test_case_core, token_test_extra_space);
+    tcase_add_test(test_case_core, token_test_two_commands);
+    tcase_add_test(test_case_core, token_test_two_inputs);
+    tcase_add_test(test_case_core, token_test_leading_whitespace);
+
     suite_add_tcase(returned, test_case_core);
 
     return returned;

@@ -1,5 +1,6 @@
 *.o
-/obj
+/obj/
+/test_obj/
 /eggsh
 /tests
 /result
