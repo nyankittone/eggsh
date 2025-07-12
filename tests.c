@@ -65,9 +65,7 @@ void map_test_remove(void) {
 }
 
 int main(void) {
-    Suite *suite = tests_tokenizerSuite();
-    SRunner *suite_runner = srunner_create(suite);
-
+    SRunner *suite_runner = srunner_create(tests_tokenizerSuite());
     srunner_run_all(suite_runner, CK_VERBOSE);
     int failed_tests = srunner_ntests_failed(suite_runner);
 
