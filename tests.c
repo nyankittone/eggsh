@@ -214,9 +214,9 @@ int main(void) {
     SRunner *suite_runner = srunner_create(suite);
 
     srunner_run_all(suite_runner, CK_VERBOSE);
-    int number_failed = srunner_ntests_failed(suite_runner);
+    int failed_tests = srunner_ntests_failed(suite_runner);
 
     srunner_free(suite_runner);
-    return number_failed > 127 ? 127 : number_failed;
+    return failed_tests > 127 ? 127 : failed_tests;
 }
 
