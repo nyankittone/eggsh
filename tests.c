@@ -2,6 +2,7 @@
 
 #include <CUnit/Basic.h>
 #include <CUnit/CUnit.h>
+#include <check.h>
 
 #include <command_builder.h>
 #include <hash_map.h>
@@ -63,15 +64,17 @@ void map_test_remove(void) {
     CU_ASSERT_EQUAL(*((int*)getFromMap(&map, "C")), 69);
 }
 
-void token_test_one(void) {
+START_TEST(token_test_one) {
     static char input[] = "hewwo\n";
 
     CommandBuilder cmd = newCommandBuilder();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
-    CU_ASSERT_EQUAL(cmd.total_tokens, 1);
-    CU_ASSERT(!strcmp(cmd.tokens.ptr, "hewwo"));
-}
+    // CU_ASSERT_EQUAL(cmd.total_tokens, 1);
+    // CU_ASSERT(!strcmp(cmd.tokens.ptr, "hewwo"));
+    ck_assert_uint_eq(cmd.total_tokens, 1);
+    ck_assert_str_eq(cmd.tokens.ptr, "hewwo");
+} END_TEST
 
 void token_test_one_broken(void) {
     static char input[] = "meow";
@@ -193,51 +196,27 @@ void token_test_leading_whitespace(void) {
     CU_ASSERT_STRING_EQUAL(cmd.tokens.ptr, "bruh");
 }
 
+Suite *tokenizerSuite(void) {
+    Suite *returned;
+    TCase *test_case_core;
+
+    returned = suite_create("Tokenizer");
+    test_case_core = tcase_create("Core");
+
+    tcase_add_test(test_case_core, token_test_one);
+    suite_add_tcase(returned, test_case_core);
+
+    return returned;
+}
+
 int main(void) {
-    // Tests to run:
-    // Tokenizer tests
+    Suite *suite = tokenizerSuite();
+    SRunner *suite_runner = srunner_create(suite);
 
-    if(CU_initialize_registry() != CUE_SUCCESS) return CU_get_error();
+    srunner_run_all(suite_runner, CK_VERBOSE);
+    int number_failed = srunner_ntests_failed(suite_runner);
 
-    CU_pSuite eggsh_suite = CU_add_suite("TokenizerSuite", NULL, NULL);
-    if(eggsh_suite == NULL) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-
-    if (
-        !CU_add_test(eggsh_suite, "One token", &token_test_one) ||
-        !CU_add_test(eggsh_suite, "One imcomplete token", &token_test_one_broken) ||
-        !CU_add_test(eggsh_suite, "Three tokens", &token_test_many) ||
-        !CU_add_test(eggsh_suite, "Three tokens with null bytes", &token_test_null_bytes) ||
-        !CU_add_test(eggsh_suite, "Two tokens with extra space", &token_test_extra_space) ||
-        !CU_add_test(eggsh_suite, "Two commands", &token_test_two_commands) ||
-        !CU_add_test(eggsh_suite, "Two inputs, one command", &token_test_two_inputs) ||
-        !CU_add_test(eggsh_suite, "Leading whitespace", &token_test_extra_space)
-    ) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-
-    eggsh_suite = CU_add_suite("HashMapSuite", NULL, NULL);
-    if(eggsh_suite == NULL) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-
-    if (
-        !CU_add_test(eggsh_suite, "Hash map with one item", &map_test_put_one) ||
-        !CU_add_test(eggsh_suite, "Hash map with many items", &map_test_put_many)
-    ) {
-        CU_cleanup_registry();
-        return CU_get_error();
-    }
-
-    CU_basic_set_mode(CU_BRM_VERBOSE);
-    CU_basic_run_tests();
-    CU_cleanup_registry();
-
-    puts("\n^ I hate reading this output ^");
-    return 0;
+    srunner_free(suite_runner);
+    return number_failed > 127 ? 127 : number_failed;
 }
 

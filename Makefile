@@ -19,7 +19,7 @@ $(program_name).o: main.c
 	$(CC) -c $< $(CFLAGS) -o $@
 
 tests: $(objects) tests.o
-	$(CC) $^ $(CFLAGS) -lcunit -o $@
+	$(CC) $^ $(CFLAGS) -lcunit -lcheck -o $@
 
 tests.o: tests.c
 	$(CC) -c $< $(CFLAGS) -o $@
