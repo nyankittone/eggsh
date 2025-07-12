@@ -219,6 +219,20 @@ int main(void) {
         return CU_get_error();
     }
 
+    eggsh_suite = CU_add_suite("HashMapSuite", NULL, NULL);
+    if(eggsh_suite == NULL) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
+    if (
+        !CU_add_test(eggsh_suite, "Hash map with one item", &map_test_put_one) ||
+        !CU_add_test(eggsh_suite, "Hash map with many items", &map_test_put_many)
+    ) {
+        CU_cleanup_registry();
+        return CU_get_error();
+    }
+
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
     CU_cleanup_registry();
