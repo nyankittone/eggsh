@@ -37,7 +37,6 @@ $(object_dir):
 	mkdir $@
 
 $(test_object_dir):
-	@echo aaaaaaaa
 	mkdir $@
 
 clean:
