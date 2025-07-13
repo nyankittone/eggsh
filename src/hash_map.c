@@ -38,38 +38,6 @@ static u32 hashMeMommyUwu(const char *const key) {
     return returned;
 }
 
-#define KEY_VALUE_RESULT_NOT_FOUND ((u8) 0)
-#define KEY_VALUE_RESULT_FOUND ((u8) 1)
-#define KEY_VALUE_RESULT_FOUND_ON_FIRST ((u8) 2)
-
-typedef struct {
-    u8 status;
-    KeyValuePair *item;
-} KeyValueFindResult;
-
-// This function is used to get a pointer a key-value pair inside a linked list in the underlying
-// array for this hash map.
-static KeyValueFindResult findKeyValuePair(KeyValuePair *const start, const char *const key) {
-    assert(start != NULL);
-    KeyValuePair *moving_node = start;
-
-    // iterate through provided linked list nodes
-    for(; moving_node->next; moving_node = moving_node->next) {
-        // if we encounter a matching key, return immediately
-        if(!strcmp(moving_node->key, key)) {
-            return (KeyValueFindResult) {
-                .status = moving_node == start ? KEY_VALUE_RESULT_FOUND_ON_FIRST : KEY_VALUE_RESULT_FOUND,
-                .item = moving_node,
-            };
-        }
-    }
-
-    return (KeyValueFindResult) {
-        .status = KEY_VALUE_RESULT_NOT_FOUND,
-        .item = moving_node,
-    };
-}
-
 HashMap *putInMap(HashMap *const map, char *const key, void *const value) {
     assert(map != NULL && key != NULL);
     KeyValuePair *start = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
@@ -107,22 +75,30 @@ HashMap *putInMap(HashMap *const map, char *const key, void *const value) {
 
 HashMap *putInMapIfUnique(HashMap *const map, char *const key, void *const value) {
     assert(map != NULL && key != NULL);
-
     KeyValuePair *start = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
-    KeyValueFindResult target = findKeyValuePair(start, key);
-    if(target.status) return map;
 
-    KeyValuePair *target_pair;
-
-    if(!start->key) {
-        target_pair = start;
-    } else {
-        target.item->next = mallocOrDie(sizeof(KeyValuePair));
-        target_pair = target.item->next;
+    // scan everything except for the first node to see if we have key
+    // if we find key, overwrite the node's value
+    KeyValuePair *current = start->next,
+                 *old = start;
+    for(; current; old = current, current = current->next) {
+        if(!strcmp(current->key, key)) return map;
     }
 
-    target_pair->key = strdup(key);
-    target_pair->value = value;
+    // check the first node
+    // if the first node has a NULL key in it, we can just use that right away.
+    if(!start->key) {
+        start->key = strdup(key);
+        start->value = value;
+        return map;
+    }
+
+    // if it's non-NULL, does it match our key? If so, return.
+    if(!strcmp(start->key, key)) return map;
+
+    old->next = mallocOrDie(sizeof(KeyValuePair));
+    old->next->key = strdup(key);
+    old->next->value = value;
     return map;
 }
 
