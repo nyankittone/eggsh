@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <hash_map.h>
@@ -95,6 +96,7 @@ HashMap *putInMap(HashMap *const map, char *const key, void *const value) {
 
     target_pair->key = strdup(key);
     target_pair->value = value;
+
     return map;
 }
 
@@ -119,10 +121,21 @@ HashMap *putInMapIfUnique(HashMap *const map, char *const key, void *const value
     return map;
 }
 
-KeyValuePair *getFromMap(HashMap *const map, const char *const key) {
+void *getFromMap(HashMap *const map, const char *const key) {
     assert(map != NULL && key != NULL);
-    KeyValueFindResult target = findKeyValuePair(map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask), key);
-    return target.status ? target.item : NULL;
+    const KeyValuePair *node = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
+
+    if(!node->key) {
+        if(!node->next) return NULL;
+        node = node->next;
+    }
+
+    do {
+        if(!strcmp(node->key, key)) return node->value;
+        node = node->next;
+    } while(node);
+
+    return NULL;
 }
 
 HashMap *removeFromMap(HashMap *const map, const char *const key) {
@@ -190,14 +203,16 @@ START_TEST(map_test_put_one) {
     HashMap map = newHashMap(array, HASH_MAP_TEST_SIZE, NULL);
 
     putInMap(&map, "bees", (void*) &value);
-    ck_assert_int_eq(*((int*)getFromMap(&map, "bees")), 1337);
+    int meow = *(int*)(getFromMap(&map, "bees"));
+    ck_assert_int_eq(meow, 1337);
 } END_TEST
 
 START_TEST(map_test_put_none) {
     KeyValuePair array[HASH_MAP_TEST_SIZE];
     HashMap map = newHashMap(array, HASH_MAP_TEST_SIZE, NULL);
 
-    ck_assert_ptr_null(getFromMap(&map, "bees"));
+    void *value = getFromMap(&map, "bees");
+    ck_assert_ptr_null(value);
 } END_TEST
 
 START_TEST(map_test_put_many) {

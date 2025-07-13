@@ -39,7 +39,7 @@ HashMap *putInMapIfUnique(HashMap *const map, char *const key, void *const value
 // This function attempts to return a pointer to the item in the given hash map with the key
 // provided. Both `map` and `key` must be non-NULL values. If there's no value associated with `key`
 // in the given map, NULL is returned.
-KeyValuePair *getFromMap(HashMap *const map, const char *const key);
+void *getFromMap(HashMap *const map, const char *const key);
 
 // this function removes a single key-value pair from the given map. Both `map` and `key` must be
 // non-NULL values. Trying to remove a key that isn't in the map does not result in an error.
