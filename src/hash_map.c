@@ -282,6 +282,7 @@ START_TEST(mapt_test_1_element_array) {
     putInMap(&map, "bees", (void*) values);
     putInMap(&map, "bang", (void*) (values + 1));
     putInMap(&map, "boom", (void*) (values + 2));
+    fputs("MEOW\n", stderr);
     putInMap(&map, "damn", (void*) (values + 3));
     putInMap(&map, "woah mama!", (void*) (values + 4));
     putInMap(&map, "j", (void*) (values + 5));
