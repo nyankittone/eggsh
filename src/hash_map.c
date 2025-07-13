@@ -72,27 +72,36 @@ static KeyValueFindResult findKeyValuePair(KeyValuePair *const start, const char
 
 HashMap *putInMap(HashMap *const map, char *const key, void *const value) {
     assert(map != NULL && key != NULL);
-
     KeyValuePair *start = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
-    KeyValueFindResult target = findKeyValuePair(start, key);
 
-    if(target.status) {
-        target.item->value = value;
+    // scan everything except for the first node to see if we have key
+    // if we find key, overwrite the node's value
+    KeyValuePair *current = start->next,
+                 *old = start;
+    for(; current; old = current, current = current->next) {
+        if(!strcmp(current->key, key)) {
+            current->value = value;
+            return map;
+        }
+    }
+
+    // check the first node
+    // if the first node has a NULL key in it, we can just use that right away.
+    if(!start->key) {
+        start->key = strdup(key);
+        start->value = value;
         return map;
     }
 
-    KeyValuePair *target_pair;
-
-    if(!start->key) {
-        target_pair = start;
-    } else {
-        target.item->next = mallocOrDie(sizeof(KeyValuePair));
-        target_pair = target.item->next;
+    // if it's non-NULL, does it match our key? If so, replace the value and return.
+    if(!strcmp(start->key, key)) {
+        start->value = value;
+        return map;
     }
 
-    target_pair->key = strdup(key);
-    target_pair->value = value;
-
+    old->next = mallocOrDie(sizeof(KeyValuePair));
+    old->next->key = strdup(key);
+    old->next->value = value;
     return map;
 }
 
@@ -251,7 +260,7 @@ START_TEST(map_test_remove) {
 } END_TEST
 
 START_TEST(map_test_small_array) {
-    int values[] = {1337, 420, 69, 1984, 1738, 5318008, 80085, 2};
+    int values[] = {1337, 420, 69, 1984, 1738, 5318008, 80085, 2, 70, 89, 1234567, 4};
     KeyValuePair array[2];
     HashMap map = newHashMap(array, 2, NULL);
 
@@ -263,6 +272,10 @@ START_TEST(map_test_small_array) {
     putInMap(&map, "j", (void*) (values + 5));
     putInMap(&map, "gaming", (void*) (values + 6));
     putInMap(&map, "your mom is critically overweight", (void*) (values + 7));
+    putInMap(&map, "idk", (void*) (values + 8));
+    putInMap(&map, "I love testing", (void*) (values + 9));
+    putInMap(&map, "meow", (void*) (values + 10));
+    putInMap(&map, "nyaa :3", (void*) (values + 11));
 
     ck_assert_int_eq(*((int*) getFromMap(&map, "bees")), 1337);
     ck_assert_int_eq(*((int*) getFromMap(&map, "bang")), 420);
@@ -272,6 +285,10 @@ START_TEST(map_test_small_array) {
     ck_assert_int_eq(*((int*) getFromMap(&map, "j")), 5318008);
     ck_assert_int_eq(*((int*) getFromMap(&map, "gaming")), 80085);
     ck_assert_int_eq(*((int*) getFromMap(&map, "your mom is critically overweight")), 2);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "idk")), 70);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "I love testing")), 89);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "meow")), 1234567);
+    ck_assert_int_eq(*((int*) getFromMap(&map, "nyaa :3")), 4);
 } END_TEST
 
 START_TEST(mapt_test_1_element_array) {
