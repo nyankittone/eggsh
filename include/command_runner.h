@@ -1,16 +1,19 @@
 #pragma once
 
-// What kind of data structures should be kept for executing a command??
-// - the command line array itself, of course
-// - A hash map for keeping the names of executables found in PATH, and their
-//   paths
-// - static hash map of functions for internal commands
-// - hash maps for aliases and functions, whenever I implement those
+#include <hash_map.h>
 
-// Should this struct hold on to pointers for its fields? Or no? It may be a good idea to not do
-// that for performance reasons, but that could make designing the system less flexible.
 typedef struct {
-    char placeholder;
+    void *hash_map_arrays;
+    HashMap path_map;
 } CommandRunner;
 
+CommandRunner makeTheRunnerIdk(void);
+CommandRunner *byeByeCommandRunner(CommandRunner *const runner);
 
+typedef struct {
+    bool program_exited;
+    u8f exit_code;
+} ExitStatus;
+#define NO_EXIT_STATUS (ExitStatus){.program_exited = false, .exit_code = 0}
+
+ExitStatus executeCommand(CommandRunner *const runner, char **token_list);
