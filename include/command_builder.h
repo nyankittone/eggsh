@@ -95,14 +95,6 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder);
 
 char **prepareExec(CommandBuilder *const builder);
 
-typedef struct {
-    bool program_exited;
-    u8f exit_code;
-} ExitStatus;
-
-#define NO_EXIT_STATUS (ExitStatus){.program_exited = false, .exit_code = 0}
-ExitStatus runCommand(CommandBuilder *const builder);
-
 #ifdef RUN_TESTS
 Suite *tests_tokenizerSuite(void);
 #endif

@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <command_builder.h>
+#include <command_runner.h>
 
 void runFile(int file_descriptor) {
     // assert that the file passed in is valid
@@ -11,6 +12,7 @@ void runFile(int file_descriptor) {
     #define READ_BUFFER_SIZE (64)
 
     CommandBuilder cmd = newCommandBuilder();
+    CommandRunner runner = makeTheRunnerIdk();
 
     char buffer[READ_BUFFER_SIZE];
     ssize_t buffer_length;
@@ -41,7 +43,7 @@ void runFile(int file_descriptor) {
         }
 
         // run a command
-        runCommand(&cmd);
+        executeCommand(&runner, prepareExec(&cmd));
         newCommand(&cmd);
     }
 

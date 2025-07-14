@@ -1,12 +1,49 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
 
 #include <util.h>
 #include <command_runner.h>
 
 #define PATH_MAP_ARRAY_SIZE (8192)
+
+static int hashDirectory(HashMap *const map, char *const path) {
+    assert(map != NULL && path != NULL);
+
+    DIR *directory = opendir(path);
+    if(!directory) return errno;
+
+    // TODO: We might be able to determine the path's length before running this function. If we
+    // can, just have the string's length get passed as a parameter instead.
+    size_t path_length = strlen(path);
+    struct stat file_stats;
+
+    for(struct dirent *directory_entry; directory_entry = readdir(directory);) {
+        // concatenate the filename with its associated directory. I'll probably want a proper,
+        // **fast**, way of doing this concatination work, but for now, I'll just shove it into a
+        // VLA until I find something faster... or maybe this is the fastest reasonable way to do
+        // it, who knows?
+        char cheeky_merged_string_lmao[strlen(directory_entry->d_name) + path_length + 2];
+        sprintf(cheeky_merged_string_lmao, "%s/%s", path, directory_entry->d_name);
+
+        // stat the filename to see if it's a regular file
+        if(stat(cheeky_merged_string_lmao, &file_stats)) {
+            // TODO: Add real error handling here
+            continue;
+        }
+
+        if(!S_ISREG(file_stats.st_mode)) continue;
+        putInMapIfUnique(map, directory_entry->d_name, path);
+    }
+
+    closedir(directory);
+    return 0;
+}
 
 CommandRunner makeTheRunnerIdk(void) {
     CommandRunner returned;

@@ -207,28 +207,6 @@ char **prepareExec(CommandBuilder *const builder) {
     return builder->command_line.ptr;
 }
 
-ExitStatus runCommand(CommandBuilder *const builder) {
-    assert(builder != NULL);
-
-    prepareExec(builder);
-
-    pid_t child = fork();
-    switch(child) {
-        case -1:
-            fputs("oops something went wrong and I didn't feel like doing error handling lmao\n", stderr);
-            return NO_EXIT_STATUS;
-        case 0:
-            execv(builder->command_line.ptr[0], builder->command_line.ptr);
-            perror("Failed to exec");
-            exit(255);
-    }
-
-    int exit_info;
-    wait(&exit_info);
-
-    return (ExitStatus) {true, WEXITSTATUS(exit_info)};
-}
-
 CommandBuilder *newCommand(CommandBuilder *const builder) {
     assert(builder != NULL);
 
