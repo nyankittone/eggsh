@@ -51,6 +51,8 @@ CommandRunner makeTheRunnerIdk(void) {
     returned.hash_map_arrays = mallocOrDie(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
     returned.path_map = newHashMap((KeyValuePair*) returned.hash_map_arrays, PATH_MAP_ARRAY_SIZE, NULL);
 
+    // TODO: Implement looking into PATH for this stuff *properly*. (will require making that
+    // string memory allocater mrraow) 
     hashDirectory(&returned.path_map, "/bin");
     hashDirectory(&returned.path_map, "/home/tiffany/.local/bin");
     return returned;

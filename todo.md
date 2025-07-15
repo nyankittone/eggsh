@@ -1,5 +1,5 @@
 # TODO list
-* Implement reading from $PATH
+* Implement reading from $PATH (almost done!)
 * Implement the cd and exit commands
 * Add support for reading commands from a file
 * Add pipes
