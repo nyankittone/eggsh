@@ -1,3 +1,4 @@
+#include "hash_map.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +51,7 @@ CommandRunner makeTheRunnerIdk(void) {
     returned.hash_map_arrays = mallocOrDie(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
     returned.path_map = newHashMap((KeyValuePair*) returned.hash_map_arrays, PATH_MAP_ARRAY_SIZE, NULL);
 
+    hashDirectory(&returned.path_map, "/bin");
     return returned;
 }
 
@@ -65,16 +67,30 @@ CommandRunner *byeByeCommandRunner(CommandRunner *const runner) {
 
 ExitStatus executeCommand(CommandRunner *const runner, char **token_list) {
     assert(runner != NULL && token_list != NULL);
+    // TODO: Have the command line be built by this object instead of the tokenizer. This will make
+    // it actually possible to implement aliases in a reasonable way.
 
     pid_t child = fork();
     switch(child) {
         case -1:
             fputs("oops something went wrong and I didn't feel like doing error handling lmao\n", stderr);
             return NO_EXIT_STATUS;
-        case 0:
-            execv(token_list[0], token_list);
+        case 0: {
+            // In theory, putting the hash map resolution logic inside the child process should make
+            // the program overall faster, since it makes more stuff kinda happen concurrently.
+            char *const base_directory = getFromMap(&runner->path_map, token_list[0]);
+            if(base_directory) {
+                char full_path[strlen(token_list[0]) + strlen(base_directory) + 2];
+                sprintf(full_path, "%s/%s", base_directory, token_list[0]);
+
+                execv(full_path, token_list);
+            } else {
+                execv(token_list[0], token_list);
+            }
+
             perror("Failed to exec");
             exit(255);
+        }
     }
 
     int exit_info;
