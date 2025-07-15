@@ -52,6 +52,7 @@ CommandRunner makeTheRunnerIdk(void) {
     returned.path_map = newHashMap((KeyValuePair*) returned.hash_map_arrays, PATH_MAP_ARRAY_SIZE, NULL);
 
     hashDirectory(&returned.path_map, "/bin");
+    hashDirectory(&returned.path_map, "/home/tiffany/.local/bin");
     return returned;
 }
 
