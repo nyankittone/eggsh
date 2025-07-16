@@ -1,3 +1,6 @@
+#ifndef UWUTIL_INCLUDED
+#define UWUTIL_INCLUDED
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -21,4 +24,6 @@ void *mallocOrDie(size_t new_allocated_size);
     fputs("note: This error message should *NEVER* appear. If it does, this program has a bug!\n", stderr); \
     abort(); \
 }
+
+#endif
 

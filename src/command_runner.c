@@ -10,7 +10,11 @@
 #include <util.h>
 #include <command_runner.h>
 
+// I have no idea what I'm doing!!!! :3
+// I love writing slop!!!
+
 #define PATH_MAP_ARRAY_SIZE (8192)
+#define COMMAND_LINE_INITIAL_SIZE (512)
 
 static int hashDirectory(HashMap *const map, char *const path) {
     assert(map != NULL && path != NULL);
@@ -49,6 +53,8 @@ CommandRunner makeTheRunnerIdk(void) {
     CommandRunner returned;
     returned.hash_map_arrays = mallocOrDie(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
     returned.path_map = newHashMap((KeyValuePair*) returned.hash_map_arrays, PATH_MAP_ARRAY_SIZE, NULL);
+    returned.command_line_buffer = mallocOrDie(sizeof(char**) * COMMAND_LINE_INITIAL_SIZE);
+    returned.command_line_capacity = COMMAND_LINE_INITIAL_SIZE;
 
     // TODO: Implement looking into PATH for this stuff *properly*. (will require making that
     // string memory allocater mrraow) 
@@ -62,6 +68,8 @@ CommandRunner *byeByeCommandRunner(CommandRunner *const runner) {
     assert(runner != NULL);
 
     wipeMap(&runner->path_map);
+    free(runner->command_line_buffer);
+    runner->command_line_capacity = 0;
     free(runner->hash_map_arrays);
     runner->hash_map_arrays = NULL;
 
@@ -86,14 +94,23 @@ static ExitStatus actuallySpawnCommand(const char *const program_path, char **co
     return (ExitStatus) {true, WEXITSTATUS(exit_info)};
 }
 
-ExitStatus executeCommand(CommandRunner *const runner, char **token_list) {
-    assert(runner != NULL && token_list != NULL);
-    
-    char *const base_directory = getFromMap(&runner->path_map, token_list[0]);
-    if(!base_directory) return actuallySpawnCommand(token_list[0], token_list);
+ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iterator) {
+    assert(runner != NULL && iterator != NULL);
 
-    char full_path[strlen(base_directory) + strlen(token_list[0]) + 2];
-    sprintf(full_path, "%s/%s", base_directory, token_list[0]);
-    return actuallySpawnCommand(full_path, token_list);
+    // I may need to re-locate this re-allocating logic if I end up making this underlying array
+    // part of another allocated region... meowww
+    if(iterator->tokens_remaining >= runner->command_line_capacity) {
+        runner->command_line_capacity = iterator->tokens_remaining + 1;
+        runner->command_line_buffer = reallocOrDie(runner->command_line_buffer, sizeof(char**) * runner->command_line_capacity);
+    }
+
+    *pasteRemainingTokens(iterator, runner->command_line_buffer) = NULL;
+
+    char *const base_directory = getFromMap(&runner->path_map, runner->command_line_buffer[0]);
+    if(!base_directory) return actuallySpawnCommand(runner->command_line_buffer[0], runner->command_line_buffer);
+
+    char full_path[strlen(base_directory) + strlen(runner->command_line_buffer[0]) + 2];
+    sprintf(full_path, "%s/%s", base_directory, runner->command_line_buffer[0]);
+    return actuallySpawnCommand(full_path, runner->command_line_buffer);
 }
 

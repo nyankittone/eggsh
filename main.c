@@ -43,7 +43,8 @@ void runFile(int file_descriptor) {
         }
 
         // run a command
-        executeCommand(&runner, prepareExec(&cmd));
+        TokenIterator token_iterator = getTokenIterator(&cmd);
+        executeCommand(&runner, &token_iterator);
         newCommand(&cmd);
     }
 

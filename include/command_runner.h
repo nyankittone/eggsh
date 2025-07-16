@@ -1,9 +1,16 @@
 #pragma once
 
+#include <command_builder.h>
 #include <hash_map.h>
 
 typedef struct {
     void *hash_map_arrays;
+    
+    // This array might get merged with some other vector at some point on the future, if doing
+    // such a thing feels appropriate.
+    char **command_line_buffer;
+    size_t command_line_capacity;
+
     HashMap path_map;
 } CommandRunner;
 
@@ -16,4 +23,5 @@ typedef struct {
 } ExitStatus;
 #define NO_EXIT_STATUS (ExitStatus){.program_exited = false, .exit_code = 0}
 
-ExitStatus executeCommand(CommandRunner *const runner, char **token_list);
+ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const token_iterator);
+
