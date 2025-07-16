@@ -21,7 +21,7 @@ static int hashDirectory(HashMap *const map, char *const path) {
 
     // TODO: We might be able to determine the path's length before running this function. If we
     // can, just have the string's length get passed as a parameter instead.
-    size_t path_length = strlen(path);
+    const size_t path_length = strlen(path);
     struct stat file_stats;
 
     for(struct dirent *directory_entry; directory_entry = readdir(directory);) {
@@ -55,6 +55,7 @@ CommandRunner makeTheRunnerIdk(void) {
     // string memory allocater mrraow) 
     hashDirectory(&returned.path_map, "/bin");
     hashDirectory(&returned.path_map, "/home/tiffany/.local/bin");
+    hashDirectory(&returned.path_map, "/home/tiffany/.nix-profile/bin");
     return returned;
 }
 
