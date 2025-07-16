@@ -93,7 +93,14 @@ typedef u8 TokenizeCommandReturn;
 
 TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder);
 
-char **prepareExec(CommandBuilder *const builder);
+typedef struct {
+    u32 tokens_remaining;
+    char *token_ptr;
+} TokenIterator;
+
+TokenIterator getTokenIterator(CommandBuilder *const tokenizer);
+char *nextToken(TokenIterator *const iterator);
+char **pasteRemainingTokens(TokenIterator *const iterator, char **destination);
 
 #ifdef RUN_TESTS
 Suite *tests_tokenizerSuite(void);

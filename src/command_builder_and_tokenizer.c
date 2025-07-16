@@ -349,6 +349,45 @@ START_TEST(token_test_leading_whitespace) {
     ck_assert_str_eq(cmd.tokens.ptr, "bruh");
 } END_TEST
 
+START_TEST(token_test_iterator) {
+    static char input[] = "meow woof bark bark nyaaaah\n";
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    ck_assert_str_eq(nextToken(&iterator), "meow");
+    ck_assert_str_eq(nextToken(&iterator), "woof");
+    ck_assert_str_eq(nextToken(&iterator), "bark");
+    ck_assert_str_eq(nextToken(&iterator), "bark");
+    ck_assert_str_eq(nextToken(&iterator), "nyaaaah");
+    ck_assert_ptr_null(nextToken(&iterator));
+    ck_assert_ptr_null(nextToken(&iterator));
+    ck_assert_ptr_null(nextToken(&iterator));
+} END_TEST
+
+START_TEST(token_test_iterator_filling) {
+    static char input[] = "oooh eee oooh ah ah tang tang walla walla bing bang\n";
+    CommandBuilder cmd = newCommandBuilder();
+    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "oooh");
+    ck_assert_str_eq(result[1], "eee");
+    ck_assert_str_eq(result[2], "oooh");
+    ck_assert_str_eq(result[3], "ah");
+    ck_assert_str_eq(result[4], "ah");
+    ck_assert_str_eq(result[5], "tang");
+    ck_assert_str_eq(result[6], "tang");
+    ck_assert_str_eq(result[7], "walla");
+    ck_assert_str_eq(result[8], "wallka");
+    ck_assert_str_eq(result[9], "bing");
+    ck_assert_str_eq(result[10], "bang");
+    ck_assert_ptr_null(result[11]);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -364,6 +403,8 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_two_commands);
     tcase_add_test(test_case_core, token_test_two_inputs);
     tcase_add_test(test_case_core, token_test_leading_whitespace);
+    tcase_add_test(test_case_core, token_test_iterator);
+    tcase_add_test(test_case_core, token_test_iterator_filling);
 
     suite_add_tcase(returned, test_case_core);
 
