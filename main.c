@@ -19,7 +19,7 @@ void runFile(int file_descriptor) {
 
     while(true) {
         // read from file
-        fputs("> ", stderr);
+        fputs("\33[1;35m>\33[m ", stderr);
         buffer_length = read(file_descriptor, buffer, READ_BUFFER_SIZE);
         if(!buffer_length) break; // A buffer length of zero means we hit EOF
 
@@ -48,6 +48,7 @@ void runFile(int file_descriptor) {
         newCommand(&cmd);
     }
 
+    byeByeCommandRunner(&runner);
     nukeCommandBuilder(&cmd);
 
     #undef READ_BUFFER_SIZE
