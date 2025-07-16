@@ -185,26 +185,35 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
     #undef INCRIMENT_REMAINING
 }
 
-char **prepareExec(CommandBuilder *const builder) {
-    assert(builder != NULL);
+TokenIterator getTokenIterator(CommandBuilder *const tokenizer) {
+    assert(tokenizer != NULL);
 
-    // Reallocate the command-line space if that is needed
-    if(builder->total_tokens >= builder->command_line.capacity) {
-        builder->command_line.capacity = builder->total_tokens + 1;
-        reallocCommandBuilder(builder);
+    return (TokenIterator) {
+        .token_ptr = tokenizer->tokens.ptr,
+        .tokens_remaining = tokenizer->total_tokens,
+    };
+}
+
+char *nextToken(TokenIterator *const iterator) {
+    assert(iterator != NULL);
+    if(!iterator->tokens_remaining) return NULL;
+
+    char *const returned = iterator->token_ptr;
+    iterator->token_ptr += strlen(iterator->token_ptr) + 1;
+    iterator->tokens_remaining--;
+
+    return returned;
+}
+
+char **pasteRemainingTokens(TokenIterator *const iterator, char **destination) {
+    assert(iterator != NULL && destination != NULL);
+
+    for(; iterator->tokens_remaining; iterator->tokens_remaining--) {
+        *(destination++) = iterator->token_ptr;
+        iterator->token_ptr += strlen(iterator->token_ptr) + 1;
     }
 
-    // Initialize our traveller pointer for going through the tokens in the arena
-    builder->command_line.ptr[builder->total_tokens] = NULL;
-    char *token = builder->tokens.ptr;
-
-    // Creating the pointer values in the array we're going to return
-    for(u32 i = 0; i < builder->total_tokens; i++) {
-        builder->command_line.ptr[i] = token;
-        token += strlen(token) + 1;
-    }
-    
-    return builder->command_line.ptr;
+    return destination;
 }
 
 CommandBuilder *newCommand(CommandBuilder *const builder) {
@@ -382,7 +391,7 @@ START_TEST(token_test_iterator_filling) {
     ck_assert_str_eq(result[5], "tang");
     ck_assert_str_eq(result[6], "tang");
     ck_assert_str_eq(result[7], "walla");
-    ck_assert_str_eq(result[8], "wallka");
+    ck_assert_str_eq(result[8], "walla");
     ck_assert_str_eq(result[9], "bing");
     ck_assert_str_eq(result[10], "bang");
     ck_assert_ptr_null(result[11]);
