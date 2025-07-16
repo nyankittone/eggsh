@@ -1,6 +1,6 @@
 {pkgs ? import <nixpkgs> {}}:
 let
-  inherit (pkgs) stdenv clang-tools check;
+  inherit (pkgs) stdenv clang-tools check gperf;
 in
 stdenv.mkDerivation {
   pname = "eggsh";
@@ -11,6 +11,10 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     check
     clang-tools
+  ];
+
+  buildInputs = [
+    gperf
   ];
 
   buildPhase = "make";
