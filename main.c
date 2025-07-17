@@ -57,7 +57,7 @@ int main(void) {
     #define PATH_MAP_ARRAY_SIZE (8192)
 
     // allocate a memory arena for all of my hash maps, including the one for your mom
-    void *map_arena = malloc(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
+    void *map_arena = mallocOrDie(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
 
     CommandRunner runner = makeTheRunnerIdk(map_arena, PATH_MAP_ARRAY_SIZE);
 
