@@ -6,8 +6,6 @@
 #include <command_builder.h>
 #include <command_runner.h>
 
-#define PATH_MAP_ARRAY_SIZE (8192)
-
 void runFile(int file_descriptor, CommandRunner *const runner) {
     // assert that the file passed in is valid
     // check if the input file descriptor is connected to a TTY. If yes, run in interactive mode.
@@ -56,11 +54,11 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
 }
 
 int main(void) {
-    // allocate a memory arena for all of my hash maps, including the one for the external command
-    // list
+    #define PATH_MAP_ARRAY_SIZE (8192)
+
+    // allocate a memory arena for all of my hash maps, including the one for your mom
     void *map_arena = malloc(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
 
-    // make the command runner immediately
     CommandRunner runner = makeTheRunnerIdk(map_arena, PATH_MAP_ARRAY_SIZE);
 
     runFile(STDIN_FILENO, &runner);
@@ -68,5 +66,7 @@ int main(void) {
     byeByeCommandRunner(&runner);
     free(map_arena);
     return EXIT_SUCCESS;
+
+    #undef PATH_MAP_ARRAY_SIZE
 }
 
