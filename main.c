@@ -1,3 +1,4 @@
+#include "hash_map.h"
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -5,14 +6,15 @@
 #include <command_builder.h>
 #include <command_runner.h>
 
-void runFile(int file_descriptor) {
+#define PATH_MAP_ARRAY_SIZE (8192)
+
+void runFile(int file_descriptor, CommandRunner *const runner) {
     // assert that the file passed in is valid
     // check if the input file descriptor is connected to a TTY. If yes, run in interactive mode.
 
     #define READ_BUFFER_SIZE (64)
 
     CommandBuilder cmd = newCommandBuilder();
-    CommandRunner runner = makeTheRunnerIdk();
 
     char buffer[READ_BUFFER_SIZE];
     ssize_t buffer_length;
@@ -44,18 +46,27 @@ void runFile(int file_descriptor) {
 
         // run a command
         TokenIterator token_iterator = getTokenIterator(&cmd);
-        executeCommand(&runner, &token_iterator);
+        executeCommand(runner, &token_iterator);
         newCommand(&cmd);
     }
 
-    byeByeCommandRunner(&runner);
     nukeCommandBuilder(&cmd);
 
     #undef READ_BUFFER_SIZE
 }
 
 int main(void) {
-    runFile(STDIN_FILENO);
-    return 0;
+    // allocate a memory arena for all of my hash maps, including the one for the external command
+    // list
+    void *map_arena = malloc(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
+
+    // make the command runner immediately
+    CommandRunner runner = makeTheRunnerIdk(map_arena, PATH_MAP_ARRAY_SIZE);
+
+    runFile(STDIN_FILENO, &runner);
+
+    byeByeCommandRunner(&runner);
+    free(map_arena);
+    return EXIT_SUCCESS;
 }
 

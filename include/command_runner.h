@@ -4,8 +4,6 @@
 #include <hash_map.h>
 
 typedef struct {
-    void *hash_map_arrays;
-    
     // This array might get merged with some other vector at some point on the future, if doing
     // such a thing feels appropriate.
     char **command_line_buffer;
@@ -14,7 +12,7 @@ typedef struct {
     HashMap path_map;
 } CommandRunner;
 
-CommandRunner makeTheRunnerIdk(void);
+CommandRunner makeTheRunnerIdk(KeyValuePair *const path_map_ptr, const size_t path_map_size);
 CommandRunner *byeByeCommandRunner(CommandRunner *const runner);
 
 typedef struct {

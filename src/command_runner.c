@@ -13,7 +13,6 @@
 // I have no idea what I'm doing!!!! :3
 // I love writing slop!!!
 
-#define PATH_MAP_ARRAY_SIZE (8192)
 #define COMMAND_LINE_INITIAL_SIZE (512)
 
 static int hashDirectory(HashMap *const map, char *const path) {
@@ -49,11 +48,10 @@ static int hashDirectory(HashMap *const map, char *const path) {
     return 0;
 }
 
-CommandRunner makeTheRunnerIdk(void) {
+CommandRunner makeTheRunnerIdk(KeyValuePair *const path_map_ptr, const size_t path_map_size) {
     CommandRunner returned;
-    returned.hash_map_arrays = mallocOrDie(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
-    returned.path_map = newHashMap((KeyValuePair*) returned.hash_map_arrays, PATH_MAP_ARRAY_SIZE, NULL);
-    returned.command_line_buffer = mallocOrDie(sizeof(char**) * COMMAND_LINE_INITIAL_SIZE);
+    returned.path_map = newHashMap(path_map_ptr, path_map_size, NULL);
+    returned.command_line_buffer = mallocOrDie(sizeof(char**) * COMMAND_LINE_INITIAL_SIZE); // grrrrr
     returned.command_line_capacity = COMMAND_LINE_INITIAL_SIZE;
 
     // TODO: Implement looking into PATH for this stuff *properly*. (will require making that
@@ -70,8 +68,6 @@ CommandRunner *byeByeCommandRunner(CommandRunner *const runner) {
     wipeMap(&runner->path_map);
     free(runner->command_line_buffer);
     runner->command_line_capacity = 0;
-    free(runner->hash_map_arrays);
-    runner->hash_map_arrays = NULL;
 
     return runner;
 }
