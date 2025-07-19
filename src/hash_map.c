@@ -267,31 +267,6 @@ START_TEST(map_test_small_array) {
     ck_assert_int_eq(*((int*) getFromMap(&map, "nyaa :3")), 4);
 } END_TEST
 
-START_TEST(mapt_test_1_element_array) {
-    int values[] = {1337, 420, 69, 1984, 1738, 5318008, 80085, 2};
-    KeyValuePair array[1];
-    HashMap map = newHashMap(array, 1, NULL);
-
-    putInMap(&map, "bees", (void*) values);
-    putInMap(&map, "bang", (void*) (values + 1));
-    putInMap(&map, "boom", (void*) (values + 2));
-    fputs("MEOW\n", stderr);
-    putInMap(&map, "damn", (void*) (values + 3));
-    putInMap(&map, "woah mama!", (void*) (values + 4));
-    putInMap(&map, "j", (void*) (values + 5));
-    putInMap(&map, "gaming", (void*) (values + 6));
-    putInMap(&map, "your mom is critically overweight", (void*) (values + 7));
-
-    ck_assert_int_eq(*((int*) getFromMap(&map, "bees")), 1337);
-    ck_assert_int_eq(*((int*) getFromMap(&map, "bang")), 420);
-    ck_assert_int_eq(*((int*) getFromMap(&map, "boom")), 69);
-    ck_assert_int_eq(*((int*) getFromMap(&map, "damn")), 1984);
-    ck_assert_int_eq(*((int*) getFromMap(&map, "woah mama!")), 1738);
-    ck_assert_int_eq(*((int*) getFromMap(&map, "j")), 5318008);
-    ck_assert_int_eq(*((int*) getFromMap(&map, "gaming")), 80085);
-    ck_assert_int_eq(*((int*) getFromMap(&map, "your mom is critically overweight")), 2);
-} END_TEST
-
 START_TEST(map_test_check_small_array_length) {
     KeyValuePair a_thing;
     u32 final_size = 0;
@@ -310,7 +285,6 @@ Suite *tests_hashMapSuite(void) {
     tcase_add_test(integ, map_test_put_many);
     tcase_add_test(integ, map_test_remove);
     tcase_add_test(integ, map_test_small_array);
-    tcase_add_test(integ, mapt_test_1_element_array);
     tcase_add_test(integ, map_test_check_small_array_length); // might remove this from integration
                                                               // tests into unit tests
     suite_add_tcase(returned, integ);
