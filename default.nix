@@ -11,9 +11,6 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     check
     clang-tools
-  ];
-
-  buildInputs = [
     gperf
   ];
 

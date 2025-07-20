@@ -1,0 +1,20 @@
+%language=ANSI-C
+%null-strings
+%includes
+%readonly-tables
+%struct-type
+%define initializer-suffix ,0
+%define lookup-function-name getShellBuiltin
+%omit-struct-type
+
+%{
+#include <builtin_commands.h>
+%}
+
+BuiltinAndKey
+%%
+echo,	&commands_echo
+cd,		&commands_cd
+printf,	&commands_printf
+exit,	&commands_exit
+pwd,	&commands_pwd

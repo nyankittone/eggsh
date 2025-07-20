@@ -15,7 +15,7 @@ test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources))
 
 all: $(program_name)
 
-$(program_name): $(objects) $(program_name).o 
+$(program_name): $(objects) $(program_name).o builtins_map.c
 	$(CC) $^ $(CFLAGS) -o $@
 
 $(program_name).o: main.c
