@@ -1,3 +1,5 @@
+#include "builtin_commands.h"
+#include "command_builder.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,8 +101,32 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
         runner->command_line_capacity = iterator->tokens_remaining + 1;
         runner->command_line_buffer = reallocOrDie(runner->command_line_buffer, sizeof(char**) * runner->command_line_capacity);
     }
+    
+    // get the first token from the iterator
+    char *const first_token = nextToken(iterator);
+    if(!first_token) {
+        fputs("No command was run!\n", stderr);
+        return NO_EXIT_STATUS;
+    }
 
-    *pasteRemainingTokens(iterator, runner->command_line_buffer) = NULL;
+    // check if it's a built-in shell command first. If so, run the corrosponding builtin
+    {
+        const BuiltinPtr builtin = getShellBuiltin(first_token);
+        if(builtin) {
+            *runner->command_line_buffer = first_token;
+            *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
+
+            return (ExitStatus) {
+                .program_exited = true,
+                .exit_code = builtin(runner->command_line_buffer),
+            };
+        }
+    }
+    
+    // If it's not a shell builtin, simply add that first token to the buffer and try running an
+    // external command
+    *runner->command_line_buffer = first_token;
+    *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
 
     char *const base_directory = getFromMap(&runner->path_map, runner->command_line_buffer[0]);
     if(!base_directory) return actuallySpawnCommand(runner->command_line_buffer[0], runner->command_line_buffer);
