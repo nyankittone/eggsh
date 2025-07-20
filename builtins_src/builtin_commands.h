@@ -13,9 +13,8 @@ mBuiltin(commands_cd);
 
 typedef struct {
     const char *name;
-    BuiltinPtr value;
+    BuiltinPtr function;
 } BuiltinAndKey;
 
-BuiltinPtr getShellBuiltin(const char *const key);
-const BuiltinAndKey *generatedLookupFunction(register const char *key, register size_t length);
+const BuiltinAndKey *getShellBuiltin(register const char *key, register size_t length);
 

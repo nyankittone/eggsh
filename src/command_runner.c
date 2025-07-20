@@ -109,20 +109,20 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
         return NO_EXIT_STATUS;
     }
 
-    // check if it's a built-in shell command first. If so, run the corrosponding builtin
+    // check if it's a built-in shell command first. If so, run the corresponding builtin
     {
-        const BuiltinPtr builtin = getShellBuiltin(first_token);
+        const BuiltinAndKey *builtin = getShellBuiltin(first_token, strlen(first_token));
         if(builtin) {
             *runner->command_line_buffer = first_token;
             *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
 
             return (ExitStatus) {
                 .program_exited = true,
-                .exit_code = builtin(runner->command_line_buffer),
+                .exit_code = builtin->function(runner->command_line_buffer),
             };
         }
     }
-    
+
     // If it's not a shell builtin, simply add that first token to the buffer and try running an
     // external command
     *runner->command_line_buffer = first_token;

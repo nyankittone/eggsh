@@ -84,7 +84,7 @@ hash (register const char *str, register size_t len)
 }
 
 const BuiltinAndKey *
-generatedLookupFunction (register const char *str, register size_t len)
+getShellBuiltin (register const char *str, register size_t len)
 {
   static const BuiltinAndKey wordlist[] =
     {
