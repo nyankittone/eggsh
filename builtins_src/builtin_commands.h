@@ -17,5 +17,5 @@ typedef struct {
 } BuiltinAndKey;
 
 BuiltinPtr getShellBuiltin(const char *const key);
-const BuiltinAndKey *generatedLookupFunction(const char *key, size_t length);
+const BuiltinAndKey *generatedLookupFunction(register const char *key, register size_t length);
 
