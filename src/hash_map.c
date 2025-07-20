@@ -1,9 +1,7 @@
 #define _XOPEN_SOURCE 500
 
 #include <assert.h>
-#include <stddef.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <hash_map.h>
@@ -13,7 +11,8 @@ HashMap newHashMap(KeyValuePair *const array, u32 array_size, u32 *const final_a
     assert(array != NULL && array_size > 0);
     HashMap returned = {.keyvals_ptr = array};
 
-    // I dunno if this bullshit bitshifting code will work tbh....
+    // Setting the "bitmask" value, which is used in getting the final index into the array after
+    // hashing. TODO: See if the bitmask value can be set in a way that is faster than this.
     u32 bitmask = ~0;
     for(; array_size; array_size >>= 1, bitmask <<= 1);
     bitmask = (~bitmask) >> 1;
