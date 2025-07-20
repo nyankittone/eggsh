@@ -4,7 +4,7 @@
 %readonly-tables
 %struct-type
 %define initializer-suffix ,0
-%define lookup-function-name getShellBuiltin
+%define lookup-function-name generatedLookupFunction
 %omit-struct-type
 
 %{

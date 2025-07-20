@@ -1,3 +1,7 @@
+#pragma once
+
+#include <stddef.h>
+
 #define mBuiltin(function_name) int function_name (char *argv[])
 typedef int (*BuiltinPtr)(char *argv[]);
 
@@ -11,4 +15,7 @@ typedef struct {
     const char *name;
     BuiltinPtr value;
 } BuiltinAndKey;
+
+BuiltinPtr getShellBuiltin(const char *const key);
+const BuiltinAndKey *generatedLookupFunction(const char *key, size_t length);
 

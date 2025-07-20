@@ -8,6 +8,7 @@ object_dir := obj
 test_object_dir := test_obj
 
 sources := $(wildcard $(source_dir)/*.c)
+
 objects := $(patsubst $(source_dir)/%.c,$(object_dir)/%.o,$(sources))
 test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources))
 
@@ -15,7 +16,7 @@ test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources))
 
 all: $(program_name)
 
-$(program_name): $(objects) $(program_name).o builtins_map.c
+$(program_name): $(objects) $(program_name).o
 	$(CC) $^ $(CFLAGS) -o $@
 
 $(program_name).o: main.c

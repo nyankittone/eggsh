@@ -1,5 +1,11 @@
+#include <string.h>
 #include <stdio.h>
 #include <builtin_commands.h>
+
+BuiltinPtr getShellBuiltin(const char *const key) {
+    const BuiltinAndKey *pair = generatedLookupFunction(key, strlen(key));
+    return pair ? pair->value : NULL;
+}
 
 mBuiltin(commands_echo) {
     puts("TESTING ECHO");
