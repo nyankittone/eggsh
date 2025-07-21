@@ -8,7 +8,7 @@
 
 mBuiltin(commands_ecode) {
 	if(!argv[1]) {
-		fputs("No exit code passed!", stderr);
+		fputs("No exit code passed!\n", stderr);
 		return 1;
 	}
 	
