@@ -18,3 +18,6 @@ cd,		&commands_cd
 printf,	&commands_printf
 exit,	&commands_exit
 pwd,	&commands_pwd
+true,	&commands_true
+false,  &commands_false
+ecode,	&commands_ecode

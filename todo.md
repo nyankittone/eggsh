@@ -1,7 +1,7 @@
 # TODO list
-* Implement the cd, echo, and exit commands
-* Create ways to unit test builtin commands
 * Implement reading from $PATH (almost done!)
+* Create ways to unit test builtin commands
+* Implement the pwd and printf commands
 * Add support for reading commands from a file
 * Add parsing for single and double quotes, backslashes, and semicolons
 * Add pipes

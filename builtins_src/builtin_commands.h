@@ -14,6 +14,9 @@ mBuiltin(commands_printf);
 mBuiltin(commands_exit);
 mBuiltin(commands_pwd);
 mBuiltin(commands_cd);
+mBuiltin(commands_true);
+mBuiltin(commands_false);
+mBuiltin(commands_ecode);
 
 typedef struct {
     const char *name;
