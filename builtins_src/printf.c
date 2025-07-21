@@ -2,7 +2,7 @@
 #include <builtin_commands.h>
 
 mBuiltin(commands_printf) {
-    puts(argv[0]);
+    puts("Not implemented yet!");
     return 0;
 }
 
