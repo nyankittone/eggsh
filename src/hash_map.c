@@ -25,7 +25,7 @@ HashMap newHashMap(KeyValuePair *const array, u32 array_size, u32 *const final_a
     return returned;
 }
 
-// This is the hash function for my hash map. it's just SDBM. I may replace it with something more
+// This is the hash function for my hash map. It's just SDBM. I may replace it with something more
 // optimal later.
 static u32 hashMeMommyUwu(const char *const key) {
     u32 returned = 0;
@@ -168,9 +168,9 @@ HashMap *wipeMap(HashMap *const map) {
     // each one if one exists
     for(u32 i = 0; i < array_size; i++) {
         cleanUpLinkedList(map->keyvals_ptr[i].next);
-        map->keyvals_ptr[i] = (KeyValuePair) {0};
     }
 
+    memset(map->keyvals_ptr, 0, sizeof(KeyValuePair) * array_size);
     return map;
 }
 

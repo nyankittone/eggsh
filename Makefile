@@ -19,7 +19,7 @@ builtins_sources := $(wildcard $(builtins_source_dir)/*.c) $(gperf_filename).c
 # builtins_sources := $(filter-out $(builtins_source_dir)/builtins_map.c, $(builtins_sources))
 
 objects := $(patsubst $(source_dir)/%.c,$(normal_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(normal_object_dir)/builtin_%.o,$(builtins_sources))
-test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources))
+test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(test_object_dir)/builtin_%.o,$(builtins_sources))
 
 .PHONY: all clean
 
@@ -44,6 +44,9 @@ $(test_object_dir)/%.o: $(source_dir)/%.c | $(test_object_dir)
 	$(CC) $(CFLAGS) $(test_flags) -c $< -o $@
 
 $(normal_object_dir)/builtin_%.o: $(builtins_source_dir)/%.c | $(normal_object_dir)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(test_object_dir)/builtin_%.o: $(builtins_source_dir)/%.c | $(test_object_dir)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(normal_object_dir):

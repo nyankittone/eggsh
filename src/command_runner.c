@@ -92,6 +92,7 @@ static ExitStatus actuallySpawnCommand(const char *const program_path, char **co
     return (ExitStatus) {true, WEXITSTATUS(exit_info)};
 }
 
+// TODO: Make this not return stuff, but rather mutate some state for the exit code and whatnot
 ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iterator) {
     assert(runner != NULL && iterator != NULL);
 
@@ -123,7 +124,7 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
         }
     }
 
-    // If it's not a shell builtin, simply add that first token to the buffer and try running an
+    // If it's not a shell builtin, just add all of the tokens to the buffer and try running an
     // external command
     *runner->command_line_buffer = first_token;
     *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
