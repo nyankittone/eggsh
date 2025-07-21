@@ -1,4 +1,3 @@
-#include <string.h>
 #include <stdio.h>
 #include <builtin_commands.h>
 
@@ -20,23 +19,15 @@ mBuiltin(commands_echo) {
     return 0;
 }
 
-mBuiltin(commands_cd) {
-    puts(argv[0]);
-    return 0;
-}
+#ifdef RUN_TESTS
+Suite *tests_echoSuite(void) {
+    Suite *returned = suite_create("echo");
+    TCase *integ = tcase_create("echo command");
 
-mBuiltin(commands_pwd) {
-    puts(argv[0]);
-    return 0;
-}
+    // tcase_add_test(integ, dsfgdsfgdg);
 
-mBuiltin(commands_exit) {
-    puts(argv[0]);
-    return 0;
+    suite_add_tcase(returned, integ);
+    return returned;
 }
-
-mBuiltin(commands_printf) {
-    puts(argv[0]);
-    return 0;
-}
+#endif
 

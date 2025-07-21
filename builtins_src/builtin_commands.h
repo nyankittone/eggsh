@@ -2,6 +2,10 @@
 
 #include <stddef.h>
 
+#ifdef RUN_TESTS
+    #include <check.h>
+#endif
+
 #define mBuiltin(function_name) int function_name (char *argv[])
 typedef int (*BuiltinPtr)(char *argv[]);
 
@@ -20,4 +24,8 @@ typedef struct {
 // command given the command's name. If there's no builtin that matches the provided key, NULL is
 // returned.
 const BuiltinAndKey *getShellBuiltin(register const char *key, register size_t length);
+
+#ifdef RUN_TESTS
+Suite *tests_echoSuite(void);
+#endif
 
