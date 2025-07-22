@@ -15,22 +15,19 @@ static CommandBuilder *reallocCommandBuilder(CommandBuilder *const builder) {
 
     builder->arena_ptr = reallocOrDie (
         builder->arena_ptr,
-        builder->command_line.capacity * sizeof(char*) + builder->tokens.capacity
+        builder->tokens.capacity
     );
 
     // TODO: memmove all the major parts of the memory arena as to avoid stupid problems.
     // (important)
 
-    builder->command_line.ptr = (char**) builder->arena_ptr;
-    builder->tokens.ptr = ((char*) builder->arena_ptr) + builder->command_line.capacity * sizeof(char*);
-
+    builder->tokens.ptr = (char*) builder->arena_ptr;
     return builder;
 }
 
 CommandBuilder newCommandBuilder(void) {
     CommandBuilder returned = {0};
     returned.tokens.capacity = INITIAL_TOKENS_CAPACITY;
-    returned.command_line.capacity = INITIAL_CMDLINE_CAPACITY;
     returned.tokens.bytes_written = 0;
 
     reallocCommandBuilder(&returned);
@@ -46,7 +43,6 @@ CommandBuilder *nukeCommandBuilder(CommandBuilder *const builder) {
                                        // in case tokens doesn't get zero-filled by the above
                                        // line.
 
-    builder->command_line = (CommandLineSpace) {0};
     return builder;
 }
 
