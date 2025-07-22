@@ -22,10 +22,6 @@
 // initially, in how many nodes can be stored.  The size is prone to growing if needed.
 #define INITIAL_TREE_CAPACITY (32)
 
-// This is how large the section in the memory arena for storing the command line tokens is
-// initially, in how many pointers can be kept. The size is prone to growing if needed.
-#define INITIAL_CMDLINE_CAPACITY (64)
-
 // This struct is part of the `CommandBuilder` structure, and includes data related to managing the
 // segment in memory for storing the strings for tokens parsed. Each token is a null-terminated
 // string.
