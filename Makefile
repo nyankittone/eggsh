@@ -56,7 +56,6 @@ $(test_object_dir):
 	mkdir -p $@
 
 $(gperf_filename).c: $(gperf_filename).gperf
-	@echo ZDESXBHGFD
 	gperf $< > $@
 
 clean:

@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <builtin_commands.h>
 
-// I hope this conforms to POSIX. Didn't look at the spec for exit *too* deeply on this one...
+// I hope this conforms to POSIX. Didn't look at the spec *too* deeply on this one...
 mBuiltin(commands_exit) {
     if(!argv[1]) exit(0);
 
