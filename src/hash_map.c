@@ -1,3 +1,7 @@
+// This hash map implementation is slow - I can feel it. It takes a noticable amount of time for
+// the shell to start when I plugged this map into it...
+// I guess I can start by not strdup()'ing every fucking key when inserting data...
+
 #define _XOPEN_SOURCE 500
 
 #include <assert.h>

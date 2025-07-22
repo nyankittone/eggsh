@@ -1,5 +1,7 @@
-#include "builtin_commands.h"
-#include "command_builder.h"
+#define _XOPEN_SOURCE 500
+
+#include <builtin_commands.h>
+#include <command_builder.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,11 +58,23 @@ CommandRunner makeTheRunnerIdk(KeyValuePair *const path_map_ptr, const size_t pa
     returned.command_line_buffer = mallocOrDie(sizeof(char**) * COMMAND_LINE_INITIAL_SIZE); // grrrrr
     returned.command_line_capacity = COMMAND_LINE_INITIAL_SIZE;
 
-    // TODO: Implement looking into PATH for this stuff *properly*. (will require making that
-    // string memory allocater mrraow) 
-    hashDirectory(&returned.path_map, "/bin");
-    hashDirectory(&returned.path_map, "/home/tiffany/.local/bin");
-    hashDirectory(&returned.path_map, "/home/tiffany/.nix-profile/bin");
+    // Temporary solution to loading stuff from PATH, hence the magic numbers and just generally
+    // questionable code.
+    {
+        char *const path_env = getenv("PATH");
+        if(!path_env) return returned;
+        returned.path_env_store = strdup(path_env);
+    }
+
+    for (
+        char *colon_ptr = returned.path_env_store, *old_ptr = returned.path_env_store;
+        colon_ptr = strchr(colon_ptr, ':');
+        old_ptr = colon_ptr
+    ) {
+        *(colon_ptr++) = '\0';
+        hashDirectory(&returned.path_map, old_ptr);
+    }
+
     return returned;
 }
 
@@ -69,6 +83,7 @@ CommandRunner *byeByeCommandRunner(CommandRunner *const runner) {
 
     wipeMap(&runner->path_map);
     free(runner->command_line_buffer);
+    free(runner->path_env_store);
     runner->command_line_capacity = 0;
 
     return runner;
@@ -100,7 +115,10 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
     // part of another allocated region... meowww
     if(iterator->tokens_remaining >= runner->command_line_capacity) {
         runner->command_line_capacity = iterator->tokens_remaining + 1;
-        runner->command_line_buffer = reallocOrDie(runner->command_line_buffer, sizeof(char**) * runner->command_line_capacity);
+        runner->command_line_buffer = reallocOrDie (
+            runner->command_line_buffer,
+            sizeof(char**) * runner->command_line_capacity
+        );
     }
     
     // get the first token from the iterator

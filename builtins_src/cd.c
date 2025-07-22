@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <builtin_commands.h>
 
-// TODO: Make this implementation of `cd` properly POSIX-conforming.
+// TODO: Make this implementation of `cd` properly POSIX-conforming. ALSO, fix the bug where this
+// behaves incorrectly when `cd`ing into a path with symlinks in it.
 mBuiltin(commands_cd) {
     if(!argv[1]) {
         // Is there a faster way of referencing the HOME environment variable that doesn't involve

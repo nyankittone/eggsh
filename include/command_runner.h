@@ -8,6 +8,8 @@ typedef struct {
     // such a thing feels appropriate.
     char **command_line_buffer;
     size_t command_line_capacity;
+    char *path_env_store; // This way of keeping track of the PATH environment variable is doomed to
+                          // change a lot over time.
 
     HashMap path_map;
 } CommandRunner;
