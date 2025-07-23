@@ -41,9 +41,13 @@ static u32 hashMeMommyUwu(const char *const key) {
     return returned;
 }
 
+static KeyValuePair *getStartPtr(HashMap *const map, const char *const key) {
+    return map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
+}
+
 HashMap *putInMap(HashMap *const map, char *const key, void *const value) {
     assert(map != NULL && key != NULL);
-    KeyValuePair *start = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
+    KeyValuePair *start = getStartPtr(map, key);
 
     // scan everything except for the first node to see if we have key
     // if we find key, overwrite the node's value
@@ -78,7 +82,7 @@ HashMap *putInMap(HashMap *const map, char *const key, void *const value) {
 
 HashMap *putInMapIfUnique(HashMap *const map, char *const key, void *const value) {
     assert(map != NULL && key != NULL);
-    KeyValuePair *start = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
+    KeyValuePair *start = getStartPtr(map, key);
 
     // scan everything except for the first node to see if we have key
     // if we find key, overwrite the node's value
@@ -107,7 +111,7 @@ HashMap *putInMapIfUnique(HashMap *const map, char *const key, void *const value
 
 void *getFromMap(HashMap *const map, const char *const key) {
     assert(map != NULL && key != NULL);
-    const KeyValuePair *node = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
+    const KeyValuePair *node = getStartPtr(map, key);
 
     if(!node->key) {
         if(!node->next) return NULL;
@@ -124,7 +128,7 @@ void *getFromMap(HashMap *const map, const char *const key) {
 
 HashMap *removeFromMap(HashMap *const map, const char *const key) {
     assert(map != NULL && key != NULL);
-    KeyValuePair *start = map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
+    KeyValuePair *start = getStartPtr(map, key);
 
     // Check first item first outside of a loop
     if(start->key && !strcmp(start->key, key)) {
