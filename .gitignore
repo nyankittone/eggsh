@@ -1,6 +1,7 @@
 *.o
 /obj/
 /eggsh
+/eggsh-dbg
 /tests
 /result
 /builtins_src/builtins_map.c

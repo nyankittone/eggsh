@@ -5,6 +5,7 @@ test_flags := -lcheck -DRUN_TESTS $(debug_flags)
 program_name := eggsh
 debug_program_name := eggsh-dbg
 source_dir := src
+builtins_source_dir := builtins_src
 
 object_dir := obj
 normal_object_dir := $(object_dir)/normal
@@ -12,7 +13,6 @@ test_object_dir := $(object_dir)/test
 debug_object_dir := $(object_dir)/debug
 
 gperf_filename := $(builtins_source_dir)/builtins_map
-gperf_object := $(normal_object_dir)/builtin_builtins_map.o # this looks stinky grrrr
 
 sources := $(wildcard $(source_dir)/*.c)
 builtins_sources := $(wildcard $(builtins_source_dir)/*.c) $(gperf_filename).c
@@ -81,5 +81,5 @@ $(gperf_filename).c: $(gperf_filename).gperf
 	gperf $< > $@
 
 clean:
-	rm -rf *.o $(object_dir) $(gperf_filename).c $(program_name) tests result
+	rm -rf *.o $(object_dir) $(gperf_filename).c $(program_name) tests result $(debug_program_name)
 
