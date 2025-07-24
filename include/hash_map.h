@@ -33,7 +33,8 @@ HashMap newHashMap(KeyValuePair *const array, u32 array_size, u32 *const final_a
 // same key, it is overwritten.
 HashMap *putInMap(HashMap *const map, char *const key, void *const value);
 
-
+// This function will only add the key and value passed into the map if a value with the passed key
+// associated with it isn't already inside the map. Otherwise, it behaves the same as `putInMap`.
 HashMap *putInMapIfUnique(HashMap *const map, char *const key, void *const value);
 
 // This function attempts to return a pointer to the item in the given hash map with the key
@@ -49,7 +50,7 @@ HashMap *removeFromMap(HashMap *const map, const char *const key);
 // and also de-allocates any additional memory that was allocated by adding entries.
 HashMap *wipeMap(HashMap *const map);
 
-// Exposing function for addding a test suite for this hash map.
+// Exposing function for adding a test suite for this hash map.
 #ifdef RUN_TESTS
 Suite *tests_hashMapSuite(void);
 #endif
