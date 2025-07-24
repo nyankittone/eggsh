@@ -1,6 +1,6 @@
-CC := cc
-CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src
-test_flags := -lcheck -DRUN_TESTS
+release_flags := -O3 -DNDEBUG
+debug_flags := -Og -g -ggdb
+test_flags := -lcheck -DRUN_TESTS $(debug_flags)
 
 program_name := eggsh
 source_dir := src
@@ -15,21 +15,22 @@ gperf_object := $(normal_object_dir)/builtin_builtins_map.o
 
 sources := $(wildcard $(source_dir)/*.c)
 builtins_sources := $(wildcard $(builtins_source_dir)/*.c) $(gperf_filename).c
-# builtins_sources := $(filter-out $(builtins_source_dir)/builtin_commands.c, $(builtins_sources))
-# builtins_sources := $(filter-out $(builtins_source_dir)/builtins_map.c, $(builtins_sources))
 
 objects := $(patsubst $(source_dir)/%.c,$(normal_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(normal_object_dir)/builtin_%.o,$(builtins_sources))
 test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(test_object_dir)/builtin_%.o,$(builtins_sources))
+
+CC := cc
+CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src
 
 .PHONY: all clean
 
 all: $(program_name)
 
 $(program_name): $(objects) $(program_name).o
-	$(CC) $^ $(CFLAGS) -o $@
+	$(CC) $^ $(CFLAGS) $(release_flags) -o $@
 
 $(program_name).o: main.c
-	$(CC) -c $< $(CFLAGS) -o $@
+	$(CC) -c $< $(CFLAGS) $(release_flags) -o $@
 
 tests: $(test_objects) tests.o
 	$(CC) $^ $(CFLAGS) $(test_flags) -o $@
@@ -38,16 +39,16 @@ tests.o: tests.c
 	$(CC) -c $< $(CFLAGS) $(test_flags) -o $@
 
 $(normal_object_dir)/%.o: $(source_dir)/%.c | $(normal_object_dir)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(release_flags) -c $< -o $@
 
 $(test_object_dir)/%.o: $(source_dir)/%.c | $(test_object_dir)
 	$(CC) $(CFLAGS) $(test_flags) -c $< -o $@
 
 $(normal_object_dir)/builtin_%.o: $(builtins_source_dir)/%.c | $(normal_object_dir)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(release_flags) -c $< -o $@
 
 $(test_object_dir)/builtin_%.o: $(builtins_source_dir)/%.c | $(test_object_dir)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(test_flags) -c $< -o $@
 
 $(normal_object_dir):
 	mkdir -p $@
