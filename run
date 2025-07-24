@@ -1,0 +1,13 @@
+#!/bin/sh
+program_name=eggsh-dbg
+make debug debug_program_name="$program_name"
+exit_code=$?
+
+if [ "$exit_code" -gt 0 ]; then
+    printf '\33[1;91mProgram failed to build! :(\33[m\n' >&2
+    exit "$exit_code"
+fi
+
+printf '\33[1;92mProgram built successfully! Running...\33[m\n' >&2
+exec "$program_name" "$@"
+
