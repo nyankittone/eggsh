@@ -41,7 +41,7 @@ static u32 hashMeMommyUwu(const char *const key) {
     return returned;
 }
 
-static KeyValuePair *getStartPtr(HashMap *const map, const char *const key) {
+static inline KeyValuePair *getStartPtr(HashMap *const map, const char *const key) {
     return map->keyvals_ptr + (hashMeMommyUwu(key) & map->bitmask);
 }
 
