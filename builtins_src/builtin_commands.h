@@ -6,7 +6,15 @@
     #include <check.h>
 #endif
 
+// This macro defines or declares a function for specifying built-in commands. Any built-in command
+// is expected to treat `argv` as if it's code being run from main(), where the first entry in the
+// array is the name of the command run, and everything else are the arguments passed to it. `argc`
+// is not a value that can be used here, because it's not needed to get the length of the array
+// passed (the array is NULL-terminated).
 #define mBuiltin(function_name) int function_name (char *argv[])
+
+// This is simply just a type definition for a function pointer that points to the kind of function
+// created with `mBuiltin`.
 typedef int (*BuiltinPtr)(char *argv[]);
 
 mBuiltin(commands_echo);
@@ -18,6 +26,9 @@ mBuiltin(commands_true);
 mBuiltin(commands_false);
 mBuiltin(commands_ecode);
 
+// This type is the one that is used in the gperf-generated hash table. For some reason, a perfect
+// hash map generator still generates code that has the keys stored in each bucket? I don't
+// understand why that is... maybe there's a good reason for it and I don't get hash maps.
 typedef struct {
     const char *name;
     BuiltinPtr function;
