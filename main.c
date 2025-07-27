@@ -11,7 +11,7 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
 
     #define READ_BUFFER_SIZE (64)
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
 
     char buffer[READ_BUFFER_SIZE];
     ssize_t buffer_length;
@@ -23,7 +23,7 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
         if(!buffer_length) break; // A buffer length of zero means we hit EOF
 
         // add text read to builder for processing
-        setParserInput(&cmd, buffer, buffer_length);
+        setTokenizerInput(&cmd, buffer, buffer_length);
 
         // process it
         // do this in a loop until we get a signal saying we hit a newline
@@ -35,7 +35,7 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
 
             if(result & PARSE_COMMAND_OUT_OF_DATA) {
                 buffer_length = read(file_descriptor, buffer, READ_BUFFER_SIZE);
-                setParserInput(&cmd, buffer, buffer_length);
+                setTokenizerInput(&cmd, buffer, buffer_length);
 
                 continue;
             }
@@ -47,7 +47,7 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
         newCommand(&cmd);
     }
 
-    nukeCommandBuilder(&cmd);
+    nukeTokenizer(&cmd);
 
     #undef READ_BUFFER_SIZE
 }

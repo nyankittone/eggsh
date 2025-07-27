@@ -10,7 +10,7 @@
 
 #include <command_builder.h>
 
-static CommandBuilder *reallocCommandBuilder(CommandBuilder *const builder) {
+static Tokenizer *reallocTokenizer(Tokenizer *const builder) {
     assert(builder != NULL);
 
     builder->arena_ptr = reallocOrDie (
@@ -25,20 +25,20 @@ static CommandBuilder *reallocCommandBuilder(CommandBuilder *const builder) {
     return builder;
 }
 
-CommandBuilder newCommandBuilder(void) {
-    CommandBuilder returned = {0};
+Tokenizer newTokenizer(void) {
+    Tokenizer returned = {0};
     returned.tokens.capacity = INITIAL_TOKENS_CAPACITY;
     returned.tokens.bytes_written = 0;
 
-    reallocCommandBuilder(&returned);
+    reallocTokenizer(&returned);
     return returned;
 }
 
-CommandBuilder *nukeCommandBuilder(CommandBuilder *const builder) {
+Tokenizer *nukeTokenizer(Tokenizer *const builder) {
     assert(builder != NULL);
     if(builder->arena_ptr) free(builder->arena_ptr);
 
-    *builder = (CommandBuilder) {0};
+    *builder = (Tokenizer) {0};
     builder->tokens = (TokenInfo) {0}; // idk if this line is even nessesary??? It's just here
                                        // in case tokens doesn't get zero-filled by the above
                                        // line.
@@ -46,13 +46,13 @@ CommandBuilder *nukeCommandBuilder(CommandBuilder *const builder) {
     return builder;
 }
 
-static CommandBuilder *addToToken(CommandBuilder *const builder, const char *const string, size_t length) {
+static Tokenizer *addToToken(Tokenizer *const builder, const char *const string, size_t length) {
     assert(builder != NULL);
 
     // check if there will be a buffer overflow, and if so, re-allocate the array.
     if(builder->tokens.bytes_written + length > builder->tokens.capacity) {
         builder->tokens.capacity *= VECTOR_GROW_MULTIPLIER;
-        reallocCommandBuilder(builder);
+        reallocTokenizer(builder);
     }
 
     // append the string data in question, nyaaah~
@@ -63,14 +63,14 @@ static CommandBuilder *addToToken(CommandBuilder *const builder, const char *con
 }
 
 // Do I need some other function like this for creating the first word? I don't think so...
-static CommandBuilder *newToken(CommandBuilder *const builder) {
+static Tokenizer *newToken(Tokenizer *const builder) {
     addToToken(builder, "", 1);
     builder->total_tokens++;
 
     return builder;
 }
 
-CommandBuilder *setParserInput(CommandBuilder *builder, char *string, size_t length) {
+Tokenizer *setTokenizerInput(Tokenizer *builder, char *string, size_t length) {
     assert(builder != NULL && string != NULL);
     builder->remaining = string;
     builder->lagged_remaining = string;
@@ -79,7 +79,7 @@ CommandBuilder *setParserInput(CommandBuilder *builder, char *string, size_t len
     return builder;
 }
 
-TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
+TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const builder) {
     assert(builder != NULL);
     if(builder->remaining_length == 0) return PARSE_COMMAND_OUT_OF_DATA;
 
@@ -181,7 +181,7 @@ TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder) {
     #undef INCRIMENT_REMAINING
 }
 
-TokenIterator getTokenIterator(CommandBuilder *const tokenizer) {
+TokenIterator getTokenIterator(Tokenizer *const tokenizer) {
     assert(tokenizer != NULL);
 
     return (TokenIterator) {
@@ -212,7 +212,7 @@ char **pasteRemainingTokens(TokenIterator *const iterator, char **destination) {
     return destination;
 }
 
-CommandBuilder *newCommand(CommandBuilder *const builder) {
+Tokenizer *newCommand(Tokenizer *const builder) {
     assert(builder != NULL);
 
     // TODO: Have this function handle shrinking the memory arena if the vibes for its size are
@@ -227,7 +227,7 @@ CommandBuilder *newCommand(CommandBuilder *const builder) {
 START_TEST(token_test_one) {
     static char input[] = "hewwo\n";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 1);
@@ -237,7 +237,7 @@ START_TEST(token_test_one) {
 START_TEST(token_test_one_broken) {
     static char input[] = "meow";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 0);
@@ -246,7 +246,7 @@ START_TEST(token_test_one_broken) {
 START_TEST(token_test_many) {
     static char input[] = "echo Hello, world!\n";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 3);
@@ -263,7 +263,7 @@ START_TEST(token_test_many) {
 START_TEST(token_test_null_bytes) {
     static char input[] = "ech\0o He\0\0ya! :""\0""3\n";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 3);
@@ -280,7 +280,7 @@ START_TEST(token_test_null_bytes) {
 START_TEST(token_test_extra_space) {
     static char input[] = "echo    meow\n";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 2);
@@ -296,7 +296,7 @@ START_TEST(token_test_two_commands) {
     static char input1[] = "echo AAA\n";
     static char input2[] = "echo BBB CCC\n";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input1, sizeof(input1) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 2);
@@ -324,7 +324,7 @@ START_TEST(token_test_two_inputs) {
     static char input1[] = "echo AAA";
     static char input2[] = " BBB CCC\n";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     TokenizeCommandReturn code = tokenizeBuilderInput(setParserInput(&cmd, input1, sizeof(input1) - 1));
     ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA);
 
@@ -347,7 +347,7 @@ START_TEST(token_test_two_inputs) {
 START_TEST(token_test_leading_whitespace) {
     static char input[] = "          \t     bruh\n";
 
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 1);
@@ -356,7 +356,7 @@ START_TEST(token_test_leading_whitespace) {
 
 START_TEST(token_test_iterator) {
     static char input[] = "meow woof bark bark nyaaaah\n";
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     TokenIterator iterator = getTokenIterator(&cmd);
@@ -372,7 +372,7 @@ START_TEST(token_test_iterator) {
 
 START_TEST(token_test_iterator_filling) {
     static char input[] = "oooh eee oooh ah ah tang tang walla walla bing bang\n";
-    CommandBuilder cmd = newCommandBuilder();
+    Tokenizer cmd = newTokenizer();
     tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
 
     TokenIterator iterator = getTokenIterator(&cmd);

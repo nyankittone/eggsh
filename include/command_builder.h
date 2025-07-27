@@ -22,7 +22,7 @@
 // initially, in how many nodes can be stored.  The size is prone to growing if needed.
 #define INITIAL_TREE_CAPACITY (32)
 
-// This struct is part of the `CommandBuilder` structure, and includes data related to managing the
+// This struct is part of the `Tokenizer` structure, and includes data related to managing the
 // segment in memory for storing the strings for tokens parsed. Each token is a null-terminated
 // string.
 typedef struct {
@@ -51,42 +51,42 @@ typedef struct {
     size_t remaining_length;
 
     bool scanning_word;
-} CommandBuilder;
+} Tokenizer;
 
-// Function for creating a new CommandBuilder object. This function will cause the program to stop
+// Function for creating a new Tokenizer object. This function will cause the program to stop
 // if allocating memory for it behind the scenes fails.
-CommandBuilder newCommandBuilder(void);
+Tokenizer newTokenizer(void);
 
 // This function frees the underlying memory arena allocated for `builder`, and sets all values
 // inside `builder` to 0. The same `builder` passed in is also returned
-CommandBuilder *nukeCommandBuilder(CommandBuilder *const builder);
+Tokenizer *nukeTokenizer(Tokenizer *const builder);
 
 // This function prepares `builder` to tokenize the contents of the string `string` with a length of
 // `length`. Note that `string` in this case is *not* a null-terminated string as is normal in C,
 // but a length-prefixed one, that may contain any number of null bytes in it. This is because the
 // input data, whether coming from a terminal or from a script file, is allowed to have null bytes
 // in it.
-CommandBuilder *setParserInput(CommandBuilder *builder, char *string, size_t length);
+Tokenizer *setTokenizerInput(Tokenizer *builder, char *string, size_t length);
 
 // This function resets the array of tokens in the underlying memory arena for `builder`, alongside
 // the syntax tree in it, effectively making way for a new command to be used by `builder`. If the
 // size of the memory arena has grown to a very large size, this function will also shrink it to
 // its original size.
-CommandBuilder *newCommand(CommandBuilder *const builder);
+Tokenizer *newCommand(Tokenizer *const builder);
 
 typedef u8 TokenizeCommandReturn;
 #define PARSE_COMMAND_NORMAL (0)
 #define PARSE_COMMAND_OUT_OF_DATA (1)
 #define PARSE_COMMAND_HIT_NEWLINE (2)
 
-TokenizeCommandReturn tokenizeBuilderInput(CommandBuilder *const builder);
+TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const builder);
 
 typedef struct {
     u32 tokens_remaining;
     char *token_ptr;
 } TokenIterator;
 
-TokenIterator getTokenIterator(CommandBuilder *const tokenizer);
+TokenIterator getTokenIterator(Tokenizer *const tokenizer);
 char *nextToken(TokenIterator *const iterator);
 char **pasteRemainingTokens(TokenIterator *const iterator, char **destination);
 
