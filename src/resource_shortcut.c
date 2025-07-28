@@ -1,15 +1,17 @@
 #define _POSIX_C_SOURCE 200112L
 
-#include <vector_info.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <assert.h>
-#include <util.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <sys/stat.h>
+
 #include <resource_shortcut.h>
+#include <vector_info.h>
+#include <util.h>
 
 #define WORKING_DIRECTORY_ALLOCATION_MINIMUM (2048)
 #define WORKING_DIRECTORY_ALLOCATION_EXTRA (128)
@@ -22,25 +24,17 @@ typedef struct {
 
 static WorkingDirectoryTracker wd_tracker;
 
+static void useFallbackDirectory(void) {
+	// TODO: Use the home directory as a fallback before trying the root directory.
+	resources.working_directory[0] = '/';
+	resources.working_directory[1] = '\0';
+	wd_tracker.length = 1;
+
+	if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
+}
+
 void initResources(void) {
 	resources.home_directory = getenv("HOME");
-
-	// is PWD present? If so, use that directly. Else, call getcwd().
-	// BUG: Currently, if the PWD environment variable is set, it will *always* be used for the
-	// working directory, even if it's wrong (i.e. the user set PWD to make it different from the
-	// true working directory). This is not correct, and what we need to do is load both the current
-	// working directory and PWD, and check their inode numbers to see if they match. We may need to
-	// also expand out the paths to be their non-symlinked versions, but idk.
-	char *const pwd_variable = getenv("PWD");
-	if(pwd_variable) {
-		wd_tracker.capacity = strlen(pwd_variable) + WORKING_DIRECTORY_ALLOCATION_EXTRA;
-		wd_tracker.capacity = wd_tracker.capacity < WORKING_DIRECTORY_ALLOCATION_MINIMUM ? WORKING_DIRECTORY_ALLOCATION_MINIMUM : wd_tracker.capacity;
-
-		resources.working_directory = mallocOrDie(wd_tracker.capacity);
-		strcpy(resources.working_directory, pwd_variable);
-
-		return;
-	}
 
 	wd_tracker.capacity = WORKING_DIRECTORY_ALLOCATION_MINIMUM;
 	resources.working_directory = mallocOrDie(wd_tracker.capacity);
@@ -61,17 +55,50 @@ void initResources(void) {
 				assert(errno != EFAULT);
 				assert(errno != EINVAL);
 
-				// TODO: Use the home directory as a fallback before trying the root directory.
-				resources.working_directory[0] = '/';
-				resources.working_directory[1] = '\0';
-				goto end_getting_working_directory;
+				// TODO: Just make this thing return directly from here instead of doing a funny
+				// goto.
+				useFallbackDirectory();
+				return;
 		}
 	}
 
-	end_getting_working_directory:
-
 	// I may not *need* the length here... running this could slow things down in the future. Idk.
 	wd_tracker.length = strlen(resources.working_directory);
+
+	char *const pwd_variable = getenv("PWD");
+	if(pwd_variable) {
+		struct stat working_directory_stats, pwd_variable_stats;
+
+		errno = 0;
+		if(!stat(resources.working_directory, &working_directory_stats)) {
+			// TODO: add logging to here to announce the fail
+			useFallbackDirectory();
+			return;
+		}
+
+		assert(S_ISDIR(working_directory_stats.st_mode));
+
+		if(!stat(pwd_variable, &pwd_variable_stats)) {
+			// TODO: add logging to here to announce the fail
+			// Use the other current working directory that was obtained
+			if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
+			return;
+		}
+
+		// If the inode numbers match, we'll use the PWD environment variable for the working
+		// directory.
+		if(working_directory_stats.st_ino == pwd_variable_stats.st_ino) {
+			wd_tracker.length = strlen(pwd_variable);
+			if(wd_tracker.length >= wd_tracker.capacity) {
+				wd_tracker.capacity = wd_tracker.length + WORKING_DIRECTORY_ALLOCATION_EXTRA;
+				resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
+			}
+
+			strcpy(resources.working_directory, pwd_variable);
+			return;
+		}
+	}
+
 	if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
 }
 
