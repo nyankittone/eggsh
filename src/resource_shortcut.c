@@ -101,3 +101,9 @@ void initResources(void) {
 	if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
 }
 
+void cleanUpResources(void) {
+	free(resources.working_directory);
+	resources = (ResourceShortcut) {0};
+	wd_tracker = (WorkingDirectoryTracker) {0};
+}
+

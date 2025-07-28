@@ -12,6 +12,8 @@ extern ResourceShortcut resources;
 // efficient access.
 void initResources(void);
 
+void cleanUpResources(void);
+
 // This must:
 // * get the working directory
 // * somehow preserve 
