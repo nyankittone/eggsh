@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define mMax(x, y) (x > y ? x : y)
+#define mMin(x, y) (x > y ? y : x)
+
 #define FATAL_ERROR_TEXT "\33[1;91mfatal:\33[m "
 #define REALLY_FATAL_ERROR_TEXT "\33[1;91mKILL IT WITH FIRE:\33[m "
 

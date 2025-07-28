@@ -1,4 +1,6 @@
-#include "vector_info.h"
+#define _POSIX_C_SOURCE 200112L
+
+#include <vector_info.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -24,6 +26,11 @@ void initResources(void) {
 	resources.home_directory = getenv("HOME");
 
 	// is PWD present? If so, use that directly. Else, call getcwd().
+	// BUG: Currently, if the PWD environment variable is set, it will *always* be used for the
+	// working directory, even if it's wrong (i.e. the user set PWD to make it different from the
+	// true working directory). This is not correct, and what we need to do is load both the current
+	// working directory and PWD, and check their inode numbers to see if they match. We may need to
+	// also expand out the paths to be their non-symlinked versions, but idk.
 	char *const pwd_variable = getenv("PWD");
 	if(pwd_variable) {
 		wd_tracker.capacity = strlen(pwd_variable) + WORKING_DIRECTORY_ALLOCATION_EXTRA;
