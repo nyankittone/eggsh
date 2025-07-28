@@ -1,5 +1,11 @@
 # TODO list
 * Fix bug in cd implementation
+  * We need to hold on to a string containing the current working directory at all points.
+  * We can do this by keeping a copy of it in the $PWD environment variable.
+  * Upon program launch, look inside the PWD variable to see if it's set. If not, set it from
+    getcwd(). Set a pointer pointing to the PWD variable afterwards for quick access.
+  * Whenever `cd` is run, we'll update PWD environment variable directly each time, and then reset
+    the pointer going to it.
 * Create ways to unit test builtin commands
 * Implement the pwd and printf commands
 * Add support for reading commands from a file
