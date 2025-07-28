@@ -14,7 +14,7 @@
 #include <util.h>
 
 #define WORKING_DIRECTORY_ALLOCATION_MINIMUM (2048)
-#define WORKING_DIRECTORY_ALLOCATION_EXTRA (128)
+#define WORKING_DIRECTORY_ALLOCATION_EXTRA (256)
 
 ResourceShortcut resources;
 
@@ -105,5 +105,33 @@ void cleanUpResources(void) {
 	free(resources.working_directory);
 	resources = (ResourceShortcut) {0};
 	wd_tracker = (WorkingDirectoryTracker) {0};
+}
+
+// This must:
+// * get the working directory
+// * somehow preserve the state of the working directory before any changes were made
+// * scan through the path string
+// * for every occurrence of "." or ".." for a directory, ignore it or trim off the last direcotry in
+//   the working directory respectively
+// * once the final string is there, set OLDPWD to the old string
+// * set PWD appropriately
+void updatePWD(const char *path) {
+	size_t minimum_buffer_size = (wd_tracker.length + 1) << 1;
+	if(minimum_buffer_size > wd_tracker.capacity) {
+		// reallocate the working directory buffer to be larger :3
+		wd_tracker.capacity = minimum_buffer_size + WORKING_DIRECTORY_ALLOCATION_EXTRA;
+		resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
+	}
+
+	char *new_working_directory = resources.working_directory + wd_tracker.length + 1;
+	// PERF: How do I want to deal with when I encounter a ".." sequence?
+	// Should I just backtrack a pointer until I find a "/"? (might be slow due to not using
+	// optimized standard library functions)
+	// Should I just run strrchr() on new_working_directory? (will be slower for larger paths, but
+	// maybe that's fine)
+	// Should I have an index in wd_tracker for how long each directory in the working directory
+	// path is at all times, so that I can just roll back a pointer by that amount? (could be faster
+	// than the former two approaches, but I'm unsure; I'll have to benchmark this approach because
+	// it *feels* like the right solution.)
 }
 
