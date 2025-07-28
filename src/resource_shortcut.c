@@ -69,7 +69,6 @@ void initResources(void) {
 	if(pwd_variable) {
 		struct stat working_directory_stats, pwd_variable_stats;
 
-		errno = 0;
 		if(!stat(resources.working_directory, &working_directory_stats)) {
 			// TODO: add logging to here to announce the fail
 			useFallbackDirectory();
