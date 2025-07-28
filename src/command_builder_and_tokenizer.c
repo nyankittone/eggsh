@@ -10,19 +10,19 @@
 
 #include <tokenizer.h>
 
-static Tokenizer *reallocTokenizer(Tokenizer *const builder) {
-    assert(builder != NULL);
+static Tokenizer *reallocTokenizer(Tokenizer *const tokenizer) {
+    assert(tokenizer != NULL);
 
-    builder->arena_ptr = reallocOrDie (
-        builder->arena_ptr,
-        builder->tokens.capacity
+    tokenizer->arena_ptr = reallocOrDie (
+        tokenizer->arena_ptr,
+        tokenizer->tokens.capacity
     );
 
     // TODO: memmove all the major parts of the memory arena as to avoid stupid problems.
     // (important)
 
-    builder->tokens.ptr = (char*) builder->arena_ptr;
-    return builder;
+    tokenizer->tokens.ptr = (char*) tokenizer->arena_ptr;
+    return tokenizer;
 }
 
 Tokenizer newTokenizer(void) {
@@ -34,66 +34,66 @@ Tokenizer newTokenizer(void) {
     return returned;
 }
 
-Tokenizer *nukeTokenizer(Tokenizer *const builder) {
-    assert(builder != NULL);
-    if(builder->arena_ptr) free(builder->arena_ptr);
+Tokenizer *nukeTokenizer(Tokenizer *const tokenizer) {
+    assert(tokenizer != NULL);
+    if(tokenizer->arena_ptr) free(tokenizer->arena_ptr);
 
-    *builder = (Tokenizer) {0};
-    builder->tokens = (TokenInfo) {0}; // idk if this line is even nessesary??? It's just here
+    *tokenizer = (Tokenizer) {0};
+    tokenizer->tokens = (TokenInfo) {0}; // idk if this line is even nessesary??? It's just here
                                        // in case tokens doesn't get zero-filled by the above
                                        // line.
 
-    return builder;
+    return tokenizer;
 }
 
-static Tokenizer *addToToken(Tokenizer *const builder, const char *const string, size_t length) {
-    assert(builder != NULL);
+static Tokenizer *addToToken(Tokenizer *const tokenizer, const char *const string, size_t length) {
+    assert(tokenizer != NULL);
 
     // check if there will be a buffer overflow, and if so, re-allocate the array.
-    if(builder->tokens.bytes_written + length > builder->tokens.capacity) {
-        builder->tokens.capacity *= VECTOR_GROW_MULTIPLIER;
-        reallocTokenizer(builder);
+    if(tokenizer->tokens.bytes_written + length > tokenizer->tokens.capacity) {
+        tokenizer->tokens.capacity *= VECTOR_GROW_MULTIPLIER;
+        reallocTokenizer(tokenizer);
     }
 
     // append the string data in question, nyaaah~
-    memcpy(builder->tokens.ptr + builder->tokens.bytes_written, string, length);
-    builder->tokens.bytes_written += length;
+    memcpy(tokenizer->tokens.ptr + tokenizer->tokens.bytes_written, string, length);
+    tokenizer->tokens.bytes_written += length;
 
-    return builder;
+    return tokenizer;
 }
 
 // Do I need some other function like this for creating the first word? I don't think so...
-static Tokenizer *newToken(Tokenizer *const builder) {
-    addToToken(builder, "", 1);
-    builder->total_tokens++;
+static Tokenizer *newToken(Tokenizer *const tokenizer) {
+    addToToken(tokenizer, "", 1);
+    tokenizer->total_tokens++;
 
-    return builder;
+    return tokenizer;
 }
 
-Tokenizer *setTokenizerInput(Tokenizer *builder, char *string, size_t length) {
-    assert(builder != NULL && string != NULL);
-    builder->remaining = string;
-    builder->lagged_remaining = string;
-    builder->remaining_length = length;
+Tokenizer *setTokenizerInput(Tokenizer *tokenizer, char *string, size_t length) {
+    assert(tokenizer != NULL && string != NULL);
+    tokenizer->remaining = string;
+    tokenizer->lagged_remaining = string;
+    tokenizer->remaining_length = length;
 
-    return builder;
+    return tokenizer;
 }
 
-TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const builder) {
-    assert(builder != NULL);
-    if(builder->remaining_length == 0) return PARSE_COMMAND_OUT_OF_DATA;
+TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
+    assert(tokenizer != NULL);
+    if(tokenizer->remaining_length == 0) return PARSE_COMMAND_OUT_OF_DATA;
 
     TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
 
     #define INCRIMENT_REMAINING \
-        builder->remaining++; \
-        if(!(--builder->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
+        tokenizer->remaining++; \
+        if(!(--tokenizer->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
 
-    // TODO: Consider adding a macro for incrimenting this builder pointer.
+    // TODO: Consider adding a macro for incrimenting this tokenizer pointer.
     // scan through remaining segment of remaining byte-by-byte.
-    if(!builder->scanning_word) {
+    if(!tokenizer->scanning_word) {
         while(true) {
-            switch(*builder->remaining) {
+            switch(*tokenizer->remaining) {
                 case '\0':
                 case ' ':
                 case '\t':
@@ -108,38 +108,38 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const builder) {
             break;
         }
 
-        builder->scanning_word = true;
+        tokenizer->scanning_word = true;
     }
 
-    builder->lagged_remaining = builder->remaining;
+    tokenizer->lagged_remaining = tokenizer->remaining;
 
     while(true) {
         while(true) {
-            switch(*builder->remaining) {
+            switch(*tokenizer->remaining) {
                 case '\0':
-                    addToToken(builder, builder->lagged_remaining, builder->remaining - builder->lagged_remaining);
+                    addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
                     INCRIMENT_REMAINING
-                    builder->lagged_remaining = builder->remaining;
+                    tokenizer->lagged_remaining = tokenizer->remaining;
 
                     continue;
                 case '\n':
                     // Add logic to add characters here
-                    addToToken(builder, builder->lagged_remaining, builder->remaining - builder->lagged_remaining);
-                    newToken(builder);
+                    addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                    newToken(tokenizer);
                     returned |= PARSE_COMMAND_HIT_NEWLINE;
                     INCRIMENT_REMAINING
-                    builder->lagged_remaining = builder->remaining;
+                    tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
             }
 
-            if(*builder->remaining != ' ' && *builder->remaining != '\t') {
+            if(*tokenizer->remaining != ' ' && *tokenizer->remaining != '\t') {
                 // Add GOOD logic to add characters here
 
                 // INCRIMENT_REMAINING macro couldn't be used here. This mightr be a sign I should
                 // make a refactor here. Or maybe all of the tokenizer code. Who knows?
-                builder->remaining++;
-                if(!(--builder->remaining_length)) {
-                    addToToken(builder, builder->lagged_remaining, builder->remaining - builder->lagged_remaining);
+                tokenizer->remaining++;
+                if(!(--tokenizer->remaining_length)) {
+                    addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
                     return returned | PARSE_COMMAND_OUT_OF_DATA;
                 }
 
@@ -149,15 +149,15 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const builder) {
             break;
         }
 
-        builder->scanning_word = false;
-        addToToken(builder, builder->lagged_remaining, builder->remaining - builder->lagged_remaining);
-        newToken(builder);
+        tokenizer->scanning_word = false;
+        addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+        newToken(tokenizer);
 
         INCRIMENT_REMAINING
-        builder->lagged_remaining = builder->remaining;
+        tokenizer->lagged_remaining = tokenizer->remaining;
 
         while(true) {
-            switch(*builder->remaining) {
+            switch(*tokenizer->remaining) {
                 case '\0':
                 case ' ':
                 case '\t':
@@ -172,8 +172,8 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const builder) {
             break;
         }
 
-        builder->scanning_word = true;
-        builder->lagged_remaining = builder->remaining;
+        tokenizer->scanning_word = true;
+        tokenizer->lagged_remaining = tokenizer->remaining;
     }
 
     return PARSE_COMMAND_NORMAL;
@@ -212,15 +212,15 @@ char **pasteRemainingTokens(TokenIterator *const iterator, char **destination) {
     return destination;
 }
 
-Tokenizer *newCommand(Tokenizer *const builder) {
-    assert(builder != NULL);
+Tokenizer *newCommand(Tokenizer *const tokenizer) {
+    assert(tokenizer != NULL);
 
     // TODO: Have this function handle shrinking the memory arena if the vibes for its size are
     // off.
-    builder->total_tokens = 0;
-    builder->tokens.bytes_written = 0;
+    tokenizer->total_tokens = 0;
+    tokenizer->tokens.bytes_written = 0;
 
-    return builder;
+    return tokenizer;
 }
 
 #ifdef RUN_TESTS
@@ -228,7 +228,7 @@ START_TEST(token_test_one) {
     static char input[] = "hewwo\n";
 
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 1);
     ck_assert_str_eq(cmd.tokens.ptr, "hewwo");
@@ -238,7 +238,7 @@ START_TEST(token_test_one_broken) {
     static char input[] = "meow";
 
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 0);
 } END_TEST
@@ -247,7 +247,7 @@ START_TEST(token_test_many) {
     static char input[] = "echo Hello, world!\n";
 
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 3);
 
@@ -264,7 +264,7 @@ START_TEST(token_test_null_bytes) {
     static char input[] = "ech\0o He\0\0ya! :""\0""3\n";
 
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 3);
 
@@ -281,7 +281,7 @@ START_TEST(token_test_extra_space) {
     static char input[] = "echo    meow\n";
 
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 2);
 
@@ -297,7 +297,7 @@ START_TEST(token_test_two_commands) {
     static char input2[] = "echo BBB CCC\n";
 
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input1, sizeof(input1) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input1, sizeof(input1) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 2);
 
@@ -307,7 +307,7 @@ START_TEST(token_test_two_commands) {
     ck_assert_str_eq(string1, "echo");
     ck_assert_str_eq(string2, "AAA");
 
-    tokenizeBuilderInput(setParserInput(newCommand(&cmd), input2, sizeof(input2) - 1));
+    tokenizeBuilderInput(setTokenizerInput(newCommand(&cmd), input2, sizeof(input2) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 3);
 
@@ -325,10 +325,10 @@ START_TEST(token_test_two_inputs) {
     static char input2[] = " BBB CCC\n";
 
     Tokenizer cmd = newTokenizer();
-    TokenizeCommandReturn code = tokenizeBuilderInput(setParserInput(&cmd, input1, sizeof(input1) - 1));
+    TokenizeCommandReturn code = tokenizeBuilderInput(setTokenizerInput(&cmd, input1, sizeof(input1) - 1));
     ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA);
 
-    code = tokenizeBuilderInput(setParserInput(&cmd, input2, sizeof(input2) - 1));
+    code = tokenizeBuilderInput(setTokenizerInput(&cmd, input2, sizeof(input2) - 1));
     ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA | PARSE_COMMAND_HIT_NEWLINE);
 
     ck_assert_uint_eq(cmd.total_tokens, 4);
@@ -348,7 +348,7 @@ START_TEST(token_test_leading_whitespace) {
     static char input[] = "          \t     bruh\n";
 
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     ck_assert_uint_eq(cmd.total_tokens, 1);
     ck_assert_str_eq(cmd.tokens.ptr, "bruh");
@@ -357,7 +357,7 @@ START_TEST(token_test_leading_whitespace) {
 START_TEST(token_test_iterator) {
     static char input[] = "meow woof bark bark nyaaaah\n";
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     TokenIterator iterator = getTokenIterator(&cmd);
     ck_assert_str_eq(nextToken(&iterator), "meow");
@@ -373,7 +373,7 @@ START_TEST(token_test_iterator) {
 START_TEST(token_test_iterator_filling) {
     static char input[] = "oooh eee oooh ah ah tang tang walla walla bing bang\n";
     Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setParserInput(&cmd, input, sizeof(input) - 1));
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
 
     TokenIterator iterator = getTokenIterator(&cmd);
     char *result[iterator.tokens_remaining + 1];

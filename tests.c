@@ -2,7 +2,7 @@
 
 #include <check.h>
 
-#include <command_builder.h>
+#include <tokenizer.h>
 #include <hash_map.h>
 
 int main(void) {
