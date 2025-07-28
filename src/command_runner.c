@@ -1,7 +1,7 @@
 #define _XOPEN_SOURCE 500
 
 #include <builtin_commands.h>
-#include <command_builder.h>
+#include <tokenizer.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>

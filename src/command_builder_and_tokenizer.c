@@ -8,7 +8,7 @@
     #include <check.h>
 #endif
 
-#include <command_builder.h>
+#include <tokenizer.h>
 
 static Tokenizer *reallocTokenizer(Tokenizer *const builder) {
     assert(builder != NULL);
