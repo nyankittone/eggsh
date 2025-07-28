@@ -1,3 +1,4 @@
+#include "rusttypes.h"
 #define _POSIX_C_SOURCE 200112L
 
 #include <errno.h>
@@ -107,6 +108,17 @@ void cleanUpResources(void) {
 	wd_tracker = (WorkingDirectoryTracker) {0};
 }
 
+static i32 appendToPath(const char *const path, const size_t offset, size_t length) {
+	size_t write_point = offset + length;
+
+	// iterate through path provided
+	// is a directory "."? Then don't append it
+	// is a directory ".."? Then un-append the last thing added
+	// Else, append that path
+
+	return length;
+}
+
 // This must:
 // * get the working directory
 // * somehow preserve the state of the working directory before any changes were made
@@ -116,6 +128,8 @@ void cleanUpResources(void) {
 // * once the final string is there, set OLDPWD to the old string
 // * set PWD appropriately
 void updatePWD(const char *path) {
+	assert(path != NULL);
+
 	size_t minimum_buffer_size = (wd_tracker.length + 1) << 1;
 	if(minimum_buffer_size > wd_tracker.capacity) {
 		// reallocate the working directory buffer to be larger :3
@@ -123,15 +137,11 @@ void updatePWD(const char *path) {
 		resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
 	}
 
-	char *new_working_directory = resources.working_directory + wd_tracker.length + 1;
-	// PERF: How do I want to deal with when I encounter a ".." sequence?
-	// Should I just backtrack a pointer until I find a "/"? (might be slow due to not using
-	// optimized standard library functions)
-	// Should I just run strrchr() on new_working_directory? (will be slower for larger paths, but
-	// maybe that's fine)
-	// Should I have an index in wd_tracker for how long each directory in the working directory
-	// path is at all times, so that I can just roll back a pointer by that amount? (could be faster
-	// than the former two approaches, but I'm unsure; I'll have to benchmark this approach because
-	// it *feels* like the right solution.)
+	size_t new_directory_start = wd_tracker.length + 1;
+	size_t new_length = 1;
+
+	// First check if the path provided is absolute. If so, iterate through that string only. Else,
+	// iterate through the old working directory, and *then* the path provided.
+	
 }
 
