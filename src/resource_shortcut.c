@@ -108,15 +108,58 @@ void cleanUpResources(void) {
 	wd_tracker = (WorkingDirectoryTracker) {0};
 }
 
-static i32 appendToPath(const char *const path, const size_t offset, size_t length) {
-	size_t write_point = offset + length;
+// TODO: Pass in write_point by reference so we can mutate it easily from here.
+static size_t appendOneToPath(const char *const path, const size_t path_length, size_t remaining_capacity, const size_t offset, const size_t write_point) {
+	if(!path_length) return remaining_capacity;
 
-	// iterate through path provided
 	// is a directory "."? Then don't append it
 	// is a directory ".."? Then un-append the last thing added
 	// Else, append that path
 
-	return length;
+
+	if(remaining_capacity <= path_length) {
+		wd_tracker.capacity *= VECTOR_GROW_MULTIPLIER;
+
+		if(remaining_capacity <= path_length) {
+			wd_tracker.capacity = wd_tracker.length + path_length +
+				WORKING_DIRECTORY_ALLOCATION_EXTRA;
+		}
+
+		remaining_capacity = wd_tracker.capacity - offset;
+		resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
+	}
+
+	strncpy(resources.working_directory + write_point, path, path_length);
+	return remaining_capacity;
+}
+
+static isize appendToPath(const char *path, const size_t offset, size_t length) {
+	size_t write_point = offset + length;
+	size_t remaining_capacity = wd_tracker.capacity - offset;
+
+	// iterate through path provided
+	for(const char *slash; slash = strchr(path, '/'); path = slash + 1) {
+		size_t length_to_slash = slash - path;
+		remaining_capacity = appendOneToPath (
+			path,
+			length_to_slash,
+			remaining_capacity,
+			offset,
+			write_point
+		);
+
+		write_point += length_to_slash;
+	}
+
+	// Run the stuff in the loop one more outside of it
+	{
+		size_t remaining_length = strlen(path);
+		appendOneToPath(path, remaining_length, remaining_capacity, offset, write_point);
+		write_point += remaining_length;
+	}
+
+	resources.working_directory[write_point] = '\0'; // idk if it makes sense to have this here...
+	return write_point - offset;
 }
 
 // This must:
@@ -138,7 +181,7 @@ void updatePWD(const char *path) {
 	}
 
 	size_t new_directory_start = wd_tracker.length + 1;
-	size_t new_length = 1;
+	size_t new_length = 0;
 
 	// First check if the path provided is absolute. If so, iterate through that string only. Else,
 	// iterate through the old working directory, and *then* the path provided.
