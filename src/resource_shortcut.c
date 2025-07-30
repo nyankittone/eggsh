@@ -142,7 +142,7 @@ static size_t appendOneToPath(const char *const path, const size_t path_length, 
 		resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
 	}
 
-	strncpy(resources.working_directory + *write_point, path, path_length);
+	memcpy(resources.working_directory + *write_point, path, path_length);
 	*write_point += path_length;
 
 	return remaining_capacity;
