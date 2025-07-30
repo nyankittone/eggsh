@@ -1,4 +1,3 @@
-#include "rusttypes.h"
 #define _POSIX_C_SOURCE 200112L
 
 #include <errno.h>
@@ -13,6 +12,7 @@
 #include <resource_shortcut.h>
 #include <vector_info.h>
 #include <util.h>
+#include <rusttypes.h>
 
 #define WORKING_DIRECTORY_ALLOCATION_MINIMUM (2048)
 #define WORKING_DIRECTORY_ALLOCATION_EXTRA (256)
@@ -108,14 +108,27 @@ void cleanUpResources(void) {
 	wd_tracker = (WorkingDirectoryTracker) {0};
 }
 
-// TODO: Pass in write_point by reference so we can mutate it easily from here.
-static size_t appendOneToPath(const char *const path, const size_t path_length, size_t remaining_capacity, const size_t offset, const size_t write_point) {
+// I feel like this code should get unit tested at some point...
+
+static size_t appendOneToPath(const char *const path, const size_t path_length, size_t remaining_capacity, const size_t offset, size_t *const write_point) {
 	if(!path_length) return remaining_capacity;
 
 	// is a directory "."? Then don't append it
 	// is a directory ".."? Then un-append the last thing added
 	// Else, append that path
+	if(path[0] == '.') {
+		if(path[1] == '\0' || path[1] == '/') return remaining_capacity;
+		if(path[1] == '.' && (path[2] == '\0' || path[2] == '/')) {
+			// totally not scuffed code at all,,, (also TODO: test alternative ways of doing this to
+			// see if this can be done faster)
+			resources.working_directory[*write_point -= 1] = '\0';
+			const char *const new_write_point = strrchr(resources.working_directory + offset, '/');
+			assert(new_write_point != NULL);
 
+			*write_point = new_write_point - resources.working_directory + 1;
+			return remaining_capacity;
+		}
+	}
 
 	if(remaining_capacity <= path_length) {
 		wd_tracker.capacity *= VECTOR_GROW_MULTIPLIER;
@@ -129,7 +142,9 @@ static size_t appendOneToPath(const char *const path, const size_t path_length, 
 		resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
 	}
 
-	strncpy(resources.working_directory + write_point, path, path_length);
+	strncpy(resources.working_directory + *write_point, path, path_length);
+	*write_point += path_length;
+
 	return remaining_capacity;
 }
 
@@ -145,18 +160,14 @@ static isize appendToPath(const char *path, const size_t offset, size_t length) 
 			length_to_slash,
 			remaining_capacity,
 			offset,
-			write_point
+			&write_point
 		);
 
-		write_point += length_to_slash;
+		resources.working_directory[write_point++] = '/';
 	}
 
 	// Run the stuff in the loop one more outside of it
-	{
-		size_t remaining_length = strlen(path);
-		appendOneToPath(path, remaining_length, remaining_capacity, offset, write_point);
-		write_point += remaining_length;
-	}
+	appendOneToPath(path, strlen(path), remaining_capacity, offset, &write_point);
 
 	resources.working_directory[write_point] = '\0'; // idk if it makes sense to have this here...
 	return write_point - offset;
@@ -181,7 +192,8 @@ void updatePWD(const char *path) {
 	}
 
 	size_t new_directory_start = wd_tracker.length + 1;
-	size_t new_length = 0;
+	resources.working_directory[new_directory_start] = '/';
+	size_t new_length = 1;
 
 	// First check if the path provided is absolute. If so, iterate through that string only. Else,
 	// iterate through the old working directory, and *then* the path provided.

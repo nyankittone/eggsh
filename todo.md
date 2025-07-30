@@ -11,6 +11,7 @@
 * Add support for reading commands from a file
 * Fix the performance problems of the hash map implementation
 * Add parsing for single and double quotes, backslashes, and semicolons
+* add the `type` command (will require refactor to do it right)
 * Make the cached file names in PATH more dynamic
   * What should be done when the PATH or the state of PATH changes?
     * new program added to dir in PATH -> program will fail to find program in table, so go through
