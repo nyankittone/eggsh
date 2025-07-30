@@ -4,6 +4,7 @@
 
 #include <tokenizer.h>
 #include <command_runner.h>
+#include <resource_shortcut.h>
 
 void runFile(int file_descriptor, CommandRunner *const runner) {
     // assert that the file passed in is valid
@@ -55,6 +56,8 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
 int main(void) {
     #define PATH_MAP_ARRAY_SIZE (8192)
 
+    initResources();
+
     // allocate a memory arena for all of my hash maps, including the one for your mom
     void *map_arena = mallocOrDie(sizeof(KeyValuePair) * PATH_MAP_ARRAY_SIZE);
 
@@ -65,6 +68,8 @@ int main(void) {
     byeByeCommandRunner(&runner);
     free(map_arena);
     return EXIT_SUCCESS;
+
+    cleanUpResources();
 
     #undef PATH_MAP_ARRAY_SIZE
 }

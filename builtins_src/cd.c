@@ -1,3 +1,4 @@
+#include "resource_shortcut.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -22,6 +23,8 @@ mBuiltin(commands_cd) {
         perror("Cannot change directory");
         return 2;
     }
+
+    updatePWD(argv[1]);
 
     return 0;
 }
