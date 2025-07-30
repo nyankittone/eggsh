@@ -148,7 +148,7 @@ static size_t appendOneToPath(const char *const path, const size_t path_length, 
 	return remaining_capacity;
 }
 
-static isize appendToPath(const char *path, const size_t offset, size_t length) {
+static size_t appendToPath(const char *path, const size_t offset, size_t length) {
 	size_t write_point = offset + length;
 	size_t remaining_capacity = wd_tracker.capacity - offset;
 
@@ -184,6 +184,12 @@ static isize appendToPath(const char *path, const size_t offset, size_t length) 
 void updatePWD(const char *path) {
 	assert(path != NULL);
 
+	// Have special case for when the provided path is an empty string
+	if(!*path) {
+		setenv("OLDPWD", resources.working_directory, true);
+		return;
+	}
+
 	size_t minimum_buffer_size = (wd_tracker.length + 1) << 1;
 	if(minimum_buffer_size > wd_tracker.capacity) {
 		// reallocate the working directory buffer to be larger :3
@@ -197,6 +203,22 @@ void updatePWD(const char *path) {
 
 	// First check if the path provided is absolute. If so, iterate through that string only. Else,
 	// iterate through the old working directory, and *then* the path provided.
-	
+	if(*path == '/') {
+		new_length = appendToPath(path + 1, new_directory_start, new_length);
+	} else {
+		new_length = appendToPath(resources.working_directory + 1, new_directory_start, new_length);
+		resources.working_directory[new_directory_start + new_length] = '/'; // PERF: could be
+																			 // faster???
+		new_length = appendToPath(path, new_directory_start, new_length);
+	}
+
+	// set OLDPWD to the old working directory.
+	setenv("OLDPWD", resources.working_directory, true);
+
+	// Shift the memory contents over to where it should be and make it null-terminated.
+	memmove(resources.working_directory, resources.working_directory + new_directory_start, new_length);
+	resources.working_directory[new_length] = '\0';
+
+	setenv("PWD", resources.working_directory, true);
 }
 
