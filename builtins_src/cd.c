@@ -24,6 +24,10 @@ mBuiltin(commands_cd) {
     }
 
     StringAndLength new_path = stageNewWD(argv[1]);
+    if(new_path.ptr == NULL) {
+        setenv("OLDPWD", resources.working_directory, true);
+        return 0;
+    }
 
     if(chdir(new_path.ptr) == -1) {
         perror("Cannot change directory");
