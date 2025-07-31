@@ -1,16 +1,12 @@
 # TODO list
-* Fix bug in cd implementation
-  * We need to hold on to a string containing the current working directory at all points.
-  * We can do this by keeping a copy of it in the $PWD environment variable.
-  * Upon program launch, look inside the PWD variable to see if it's set. If not, set it from
-    getcwd(). Set a pointer pointing to the PWD variable afterwards for quick access.
-  * Whenever `cd` is run, we'll update PWD environment variable directly each time, and then reset
-    the pointer going to it.
+* Fix parsing bug in `cd` when there are back-to-back "/" characters
 * Create ways to unit test builtin commands
 * Implement the pwd and printf commands
+* Make the `cd` implementation properly POSIX-conforming
+* Implement a command for generating random numbers
 * Add support for reading commands from a file
-* Fix the performance problems of the hash map implementation
 * Add parsing for single and double quotes, backslashes, and semicolons
+* Fix the performance problems of the hash map implementation (and other performance problems)
 * add the `type` command (will require refactor to do it right)
 * Make the cached file names in PATH more dynamic
   * What should be done when the PATH or the state of PATH changes?

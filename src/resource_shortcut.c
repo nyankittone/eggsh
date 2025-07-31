@@ -111,14 +111,14 @@ void cleanUpResources(void) {
 
 // I feel like this code should get unit tested at some point...
 
-static size_t appendOneToPath(const char *const path, const size_t path_length, size_t remaining_capacity, const size_t offset, size_t *const write_point) {
-	if(!path_length) return remaining_capacity;
+static bool appendOneToPath(const char *const path, const size_t path_length, size_t *const remaining_capacity, const size_t offset, size_t *const write_point) {
+	if(!path_length) return false;
 
 	// is a directory "."? Then don't append it
 	// is a directory ".."? Then un-append the last thing added
 	// Else, append that path
 	if(path[0] == '.') {
-		if(path[1] == '\0' || path[1] == '/') return remaining_capacity;
+		if(path[1] == '\0' || path[1] == '/') return false;
 		if(path[1] == '.' && (path[2] == '\0' || path[2] == '/')) {
 			// totally not scuffed code at all,,, (also TODO: test alternative ways of doing this to
 			// see if this can be done faster)
@@ -127,26 +127,26 @@ static size_t appendOneToPath(const char *const path, const size_t path_length, 
 			if(!new_write_point) new_write_point = resources.working_directory + offset;
 
 			*write_point = new_write_point - resources.working_directory;
-			return remaining_capacity;
+			return true;
 		}
 	}
 
-	if(remaining_capacity <= path_length) {
+	if(*remaining_capacity <= path_length) {
 		wd_tracker.capacity *= VECTOR_GROW_MULTIPLIER;
 
-		if(remaining_capacity <= path_length) {
+		if(*remaining_capacity <= path_length) {
 			wd_tracker.capacity = wd_tracker.length + path_length +
 				WORKING_DIRECTORY_ALLOCATION_EXTRA;
 		}
 
-		remaining_capacity = wd_tracker.capacity - offset;
+		*remaining_capacity = wd_tracker.capacity - offset;
 		resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
 	}
 
 	memcpy(resources.working_directory + *write_point, path, path_length);
 	*write_point += path_length;
 
-	return remaining_capacity;
+	return true;
 }
 
 static size_t appendToPath(const char *path, const size_t offset, size_t length) {
@@ -157,20 +157,19 @@ static size_t appendToPath(const char *path, const size_t offset, size_t length)
 	for(const char *slash; slash = strchr(path, '/'); path = slash + 1) {
 
 		size_t length_to_slash = slash - path;
-		remaining_capacity = appendOneToPath (
+		if(appendOneToPath (
 			path,
 			length_to_slash,
-			remaining_capacity,
+			&remaining_capacity,
 			offset,
 			&write_point
-		);
+		)) resources.working_directory[write_point++] = '/';
 
-		resources.working_directory[write_point++] = '/';
 	}
 
 
 	// Run the stuff in the loop one more outside of it
-	appendOneToPath(path, strlen(path), remaining_capacity, offset, &write_point);
+	appendOneToPath(path, strlen(path), &remaining_capacity, offset, &write_point);
 
 	resources.working_directory[write_point] = '\0'; // idk if it makes sense to have this here...
 	return write_point - offset;
