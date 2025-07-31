@@ -1,4 +1,8 @@
+#define _POSIX_C_SOURCE 200112L
+
+#include <stdbool.h>
 #include "resource_shortcut.h"
+#include "util.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -19,12 +23,16 @@ mBuiltin(commands_cd) {
         return commands_cd((char*[]){argv[0], home_directory, NULL});
     }
 
-    if(chdir(argv[1]) == -1) {
+    StringAndLength new_path = stageNewWD(argv[1]);
+
+    if(chdir(new_path.ptr) == -1) {
         perror("Cannot change directory");
         return 2;
     }
 
-    updatePWD(argv[1]);
+    setenv("OLDPWD", new_path.ptr, true);
+    applyNewWD(&new_path);
+    setenv("PWD", resources.working_directory, true);
 
     return 0;
 }

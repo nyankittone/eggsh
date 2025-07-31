@@ -16,6 +16,13 @@ enum ExitCode {
     EXIT_PRE_LAUNCH_ERROR,
 };
 
+typedef struct {
+    char *ptr;
+    size_t length;
+} StringAndLength;
+
+#define NO_STRING_AND_LENGTH ((StringAndLength){.ptr = 0, .length = 0})
+
 void panic(int exit_code, const char *const message_format, ...);
 void OOMPanic(void);
 

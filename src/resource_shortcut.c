@@ -70,7 +70,8 @@ void initResources(void) {
 	if(pwd_variable) {
 		struct stat working_directory_stats, pwd_variable_stats;
 
-		if(!stat(resources.working_directory, &working_directory_stats)) {
+		if(stat(resources.working_directory, &working_directory_stats) == -1) {
+
 			// TODO: add logging to here to announce the fail
 			useFallbackDirectory();
 			return;
@@ -122,10 +123,10 @@ static size_t appendOneToPath(const char *const path, const size_t path_length, 
 			// totally not scuffed code at all,,, (also TODO: test alternative ways of doing this to
 			// see if this can be done faster)
 			resources.working_directory[*write_point -= 1] = '\0';
-			const char *const new_write_point = strrchr(resources.working_directory + offset, '/');
-			assert(new_write_point != NULL);
+			const char *new_write_point = strrchr(resources.working_directory + offset, '/');
+			if(!new_write_point) new_write_point = resources.working_directory + offset;
 
-			*write_point = new_write_point - resources.working_directory + 1;
+			*write_point = new_write_point - resources.working_directory;
 			return remaining_capacity;
 		}
 	}
@@ -154,6 +155,7 @@ static size_t appendToPath(const char *path, const size_t offset, size_t length)
 
 	// iterate through path provided
 	for(const char *slash; slash = strchr(path, '/'); path = slash + 1) {
+
 		size_t length_to_slash = slash - path;
 		remaining_capacity = appendOneToPath (
 			path,
@@ -165,6 +167,7 @@ static size_t appendToPath(const char *path, const size_t offset, size_t length)
 
 		resources.working_directory[write_point++] = '/';
 	}
+
 
 	// Run the stuff in the loop one more outside of it
 	appendOneToPath(path, strlen(path), remaining_capacity, offset, &write_point);
@@ -181,14 +184,9 @@ static size_t appendToPath(const char *path, const size_t offset, size_t length)
 //   the working directory respectively
 // * once the final string is there, set OLDPWD to the old string
 // * set PWD appropriately
-void updatePWD(const char *path) {
+const StringAndLength stageNewWD(const char *path) {
 	assert(path != NULL);
-
-	// Have special case for when the provided path is an empty string
-	if(!*path) {
-		setenv("OLDPWD", resources.working_directory, true);
-		return;
-	}
+	if(!*path) return NO_STRING_AND_LENGTH;
 
 	size_t minimum_buffer_size = (wd_tracker.length + 1) << 1;
 	if(minimum_buffer_size > wd_tracker.capacity) {
@@ -201,24 +199,34 @@ void updatePWD(const char *path) {
 	resources.working_directory[new_directory_start] = '/';
 	size_t new_length = 1;
 
+
 	// First check if the path provided is absolute. If so, iterate through that string only. Else,
 	// iterate through the old working directory, and *then* the path provided.
 	if(*path == '/') {
 		new_length = appendToPath(path + 1, new_directory_start, new_length);
 	} else {
 		new_length = appendToPath(resources.working_directory + 1, new_directory_start, new_length);
-		resources.working_directory[new_directory_start + new_length] = '/'; // PERF: could be
+		resources.working_directory[new_directory_start + new_length++] = '/'; // PERF: could be
 																			 // faster???
 		new_length = appendToPath(path, new_directory_start, new_length);
 	}
 
-	// set OLDPWD to the old working directory.
-	setenv("OLDPWD", resources.working_directory, true);
-
 	// Shift the memory contents over to where it should be and make it null-terminated.
-	memmove(resources.working_directory, resources.working_directory + new_directory_start, new_length);
-	resources.working_directory[new_length] = '\0';
+	// memmove(resources.working_directory, resources.working_directory + new_directory_start, new_length);
+	// resources.working_directory[new_length] = '\0';
+	// wd_tracker.length = new_length;
 
-	setenv("PWD", resources.working_directory, true);
+	return (StringAndLength) {
+		.ptr = resources.working_directory + new_directory_start,
+		.length = new_length
+	};
+}
+
+// TODO: Will it be faster to just pass this struct by value? I should test that,,
+void applyNewWD(const StringAndLength *const new_path) {
+	// Shift the memory contents over to where it should be and make it null-terminated.
+	memmove(resources.working_directory, new_path->ptr, new_path->length);
+	resources.working_directory[new_path->length] = '\0';
+	wd_tracker.length = new_path->length;
 }
 

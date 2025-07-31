@@ -1,5 +1,7 @@
 #pragma once
 
+#include <util.h>
+
 typedef struct {
 	char *working_directory;
 	const char *old_working_directory;
@@ -22,5 +24,7 @@ void cleanUpResources(void);
 //   the working directory respectively
 // * once the final string is there, set OLDPWD to the old string
 // * set PWD appropriately
-void updatePWD(const char *path);
+const StringAndLength stageNewWD(const char *path);
+
+void applyNewWD(const StringAndLength *const string);
 

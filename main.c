@@ -19,6 +19,7 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
 
     while(true) {
         // read from file
+        fprintf(stderr, "%s\n", resources.working_directory);
         fputs("\33[1;35m>\33[m ", stderr);
         buffer_length = read(file_descriptor, buffer, READ_BUFFER_SIZE);
         if(!buffer_length) break; // A buffer length of zero means we hit EOF
