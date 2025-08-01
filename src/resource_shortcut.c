@@ -34,83 +34,6 @@ static void useFallbackDirectory(void) {
 	if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
 }
 
-void initResources(void) {
-	resources.home_directory = getenv("HOME");
-
-	wd_tracker.capacity = WORKING_DIRECTORY_ALLOCATION_MINIMUM;
-	resources.working_directory = mallocOrDie(wd_tracker.capacity);
-
-	while(true) {
-		errno = 0;
-		if(getcwd(resources.working_directory, wd_tracker.capacity)) break;
-
-		switch(errno) {
-			case ERANGE:
-				wd_tracker.capacity *= VECTOR_GROW_MULTIPLIER;
-				resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
-				continue;
-			case ENOMEM:
-				OOMPanic();
-				break;
-			default:
-				assert(errno != EFAULT);
-				assert(errno != EINVAL);
-
-				// TODO: Just make this thing return directly from here instead of doing a funny
-				// goto.
-				useFallbackDirectory();
-				return;
-		}
-	}
-
-	// I may not *need* the length here... running this could slow things down in the future. Idk.
-	wd_tracker.length = strlen(resources.working_directory);
-
-	char *const pwd_variable = getenv("PWD");
-	if(pwd_variable) {
-		struct stat working_directory_stats, pwd_variable_stats;
-
-		if(stat(resources.working_directory, &working_directory_stats) == -1) {
-
-			// TODO: add logging to here to announce the fail
-			useFallbackDirectory();
-			return;
-		}
-
-		assert(S_ISDIR(working_directory_stats.st_mode));
-
-		if(!stat(pwd_variable, &pwd_variable_stats)) {
-			// TODO: add logging to here to announce the fail
-			// Use the other current working directory that was obtained
-			if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
-			return;
-		}
-
-		// If the inode numbers match, we'll use the PWD environment variable for the working
-		// directory.
-		if(working_directory_stats.st_ino == pwd_variable_stats.st_ino) {
-			wd_tracker.length = strlen(pwd_variable);
-			if(wd_tracker.length >= wd_tracker.capacity) {
-				wd_tracker.capacity = wd_tracker.length + WORKING_DIRECTORY_ALLOCATION_EXTRA;
-				resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
-			}
-
-			strcpy(resources.working_directory, pwd_variable);
-			return;
-		}
-	}
-
-	if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
-}
-
-void cleanUpResources(void) {
-	free(resources.working_directory);
-	resources = (ResourceShortcut) {0};
-	wd_tracker = (WorkingDirectoryTracker) {0};
-}
-
-// I feel like this code should get unit tested at some point...
-
 static bool appendOneToPath(const char *const path, const size_t path_length, size_t *const remaining_capacity, const size_t offset, size_t *const write_point) {
 	if(!path_length) return false;
 
@@ -167,13 +90,85 @@ static size_t appendToPath(const char *path, const size_t offset, size_t length)
 
 	}
 
-
 	// Run the stuff in the loop one more outside of it
 	appendOneToPath(path, strlen(path), &remaining_capacity, offset, &write_point);
 
 	resources.working_directory[write_point] = '\0'; // idk if it makes sense to have this here...
 	return write_point - offset;
 }
+
+void initResources(void) {
+	resources.home_directory = getenv("HOME");
+
+	wd_tracker.capacity = WORKING_DIRECTORY_ALLOCATION_MINIMUM;
+	resources.working_directory = mallocOrDie(wd_tracker.capacity);
+
+	while(true) {
+		errno = 0;
+		if(getcwd(resources.working_directory, wd_tracker.capacity)) break;
+
+		switch(errno) {
+			case ERANGE:
+				wd_tracker.capacity *= VECTOR_GROW_MULTIPLIER;
+				resources.working_directory = reallocOrDie(resources.working_directory, wd_tracker.capacity);
+				continue;
+			case ENOMEM:
+				OOMPanic();
+				break;
+			default:
+				assert(errno != EFAULT);
+				assert(errno != EINVAL);
+
+				// TODO: Just make this thing return directly from here instead of doing a funny
+				// goto.
+				useFallbackDirectory();
+				return;
+		}
+	}
+
+	// I may not *need* the length here... running this could slow things down in the future. Idk.
+	wd_tracker.length = strlen(resources.working_directory);
+
+	char *const pwd_variable = getenv("PWD");
+	if(pwd_variable) {
+		struct stat working_directory_stats, pwd_variable_stats;
+
+		if(stat(resources.working_directory, &working_directory_stats) == -1) {
+
+			// TODO: add logging to here to announce the fail
+			useFallbackDirectory();
+			return;
+		}
+
+		assert(S_ISDIR(working_directory_stats.st_mode));
+
+		if(!stat(pwd_variable, &pwd_variable_stats)) {
+			// TODO: add logging to here to announce the fail
+			// Use the other current working directory that was obtained
+			if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
+			return;
+		}
+
+		// If the inode numbers match, we'll use the PWD environment variable for the working
+		// directory.
+		if(working_directory_stats.st_ino == pwd_variable_stats.st_ino) {
+			resources.working_directory[0] = '/';
+			wd_tracker.length = appendToPath(pwd_variable + 1, 0, 1);
+			return;
+		}
+	}
+
+	if(setenv("PWD", resources.working_directory, false) == -1) OOMPanic();
+}
+
+void cleanUpResources(void) {
+	free(resources.working_directory);
+	resources = (ResourceShortcut) {0};
+	wd_tracker = (WorkingDirectoryTracker) {0};
+}
+
+// I feel like this code should get unit tested at some point...
+
 
 // This must:
 // * get the working directory
@@ -195,16 +190,17 @@ const StringAndLength stageNewWD(const char *path) {
 	}
 
 	size_t new_directory_start = wd_tracker.length + 1;
-	resources.working_directory[new_directory_start] = '/';
-	size_t new_length = 1;
-
+	size_t new_length;
 
 	// First check if the path provided is absolute. If so, iterate through that string only. Else,
 	// iterate through the old working directory, and *then* the path provided.
 	if(*path == '/') {
+		new_length = 1;
+		resources.working_directory[new_directory_start] = '/';
 		new_length = appendToPath(path + 1, new_directory_start, new_length);
 	} else {
-		new_length = appendToPath(resources.working_directory + 1, new_directory_start, new_length);
+		new_length = wd_tracker.length;
+		memcpy(resources.working_directory + new_directory_start, resources.working_directory, new_length);
 		resources.working_directory[new_directory_start + new_length++] = '/'; // PERF: could be
 																			 // faster???
 		new_length = appendToPath(path, new_directory_start, new_length);
