@@ -46,8 +46,8 @@ static bool appendOneToPath(const char *const path, const size_t path_length, si
 			// totally not scuffed code at all,,, (also TODO: test alternative ways of doing this to
 			// see if this can be done faster)
 			resources.working_directory[*write_point -= 1] = '\0';
-			const char *new_write_point = strrchr(resources.working_directory + offset, '/');
-			if(!new_write_point) new_write_point = resources.working_directory + offset;
+			const char *new_write_point = strrchr(resources.working_directory + offset + 1, '/');
+			if(!new_write_point) new_write_point = resources.working_directory + offset + 1;
 
 			*write_point = new_write_point - resources.working_directory;
 			return true;
@@ -201,15 +201,17 @@ const StringAndLength stageNewWD(const char *path) {
 	} else {
 		new_length = wd_tracker.length;
 		memcpy(resources.working_directory + new_directory_start, resources.working_directory, new_length);
-		resources.working_directory[new_directory_start + new_length++] = '/'; // PERF: could be
-																			 // faster???
-		new_length = appendToPath(path, new_directory_start, new_length);
-	}
+		if(new_length > 1) resources.working_directory[new_directory_start + new_length++] = '/';
 
-	// Shift the memory contents over to where it should be and make it null-terminated.
-	// memmove(resources.working_directory, resources.working_directory + new_directory_start, new_length);
-	// resources.working_directory[new_length] = '\0';
-	// wd_tracker.length = new_length;
+		printf("AAAAA %zu\n", new_length);
+		new_length = appendToPath(path, new_directory_start, new_length);
+		printf("BBBBB %zu\n", new_length);
+
+		if (
+			resources.working_directory[new_directory_start + new_length - 1] == '/' &&
+			new_length > 1
+		) new_length--;
+	}
 
 	return (StringAndLength) {
 		.ptr = resources.working_directory + new_directory_start,

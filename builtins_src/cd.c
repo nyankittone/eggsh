@@ -29,6 +29,10 @@ mBuiltin(commands_cd) {
         return 0;
     }
 
+    fwrite(new_path.ptr, 1, new_path.length, stdout);
+    putchar('\n');
+    printf("%zu\n", new_path.length);
+
     if(chdir(new_path.ptr) == -1) {
         perror("Cannot change directory");
         return 2;
