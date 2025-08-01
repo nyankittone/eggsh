@@ -203,10 +203,7 @@ const StringAndLength stageNewWD(const char *path) {
 		memcpy(resources.working_directory + new_directory_start, resources.working_directory, new_length);
 		if(new_length > 1) resources.working_directory[new_directory_start + new_length++] = '/';
 
-		printf("AAAAA %zu\n", new_length);
 		new_length = appendToPath(path, new_directory_start, new_length);
-		printf("BBBBB %zu\n", new_length);
-
 		if (
 			resources.working_directory[new_directory_start + new_length - 1] == '/' &&
 			new_length > 1

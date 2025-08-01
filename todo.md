@@ -1,5 +1,4 @@
 # TODO list
-* Fix parsing bug in `cd` when there are back-to-back "/" characters
 * Create ways to unit test builtin commands
 * Implement the pwd and printf commands
 * Make the `cd` implementation properly POSIX-conforming
