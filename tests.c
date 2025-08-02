@@ -1,10 +1,10 @@
-#include "output_capture.h"
 #include <stdio.h>
 
 #include <check.h>
 
 #include <tokenizer.h>
 #include <hash_map.h>
+#include <testing/output_capture.h>
 
 int bruh(void *whatever) {
     puts("Meow!");

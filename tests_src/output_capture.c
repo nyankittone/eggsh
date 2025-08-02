@@ -1,13 +1,13 @@
 #include <stdio.h>
-
-#include "builtin_commands.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <output_capture.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+
+#include <builtin_commands.h>
+#include <testing/output_capture.h>
 
 #define PIPE_READ (0)
 #define PIPE_WRITE (1)
@@ -20,7 +20,6 @@ tests_StdoutResult tests_getStdout (
 ) {
 	assert(func != NULL);
 	assert(buffer_size > 0);
-
 
 	// pipe it
 	int pipe_ends[2];

@@ -1,6 +1,6 @@
 release_flags := -O3 -DNDEBUG
 debug_flags := -Og -g -ggdb
-test_flags := -lcheck -DRUN_TESTS $(debug_flags) -Itests_include
+test_flags := -lcheck -DRUN_TESTS $(debug_flags)
 
 program_name := eggsh
 debug_program_name := eggsh-dbg
