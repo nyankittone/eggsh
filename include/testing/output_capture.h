@@ -16,3 +16,4 @@ tests_StdoutResult tests_getStdout(int (*func)(void *inputs), void *inputs, char
 
 tests_StdoutResult tests_getBuiltinStdout(void *extra, char *const buffer, size_t buffer_size, char *command_name, ...);
 
+void tests_assertStdout(const char *const buffer, const tests_StdoutResult *const results, const char *const string);

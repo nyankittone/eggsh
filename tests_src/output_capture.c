@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include <check.h>
+
 #include <builtin_commands.h>
 #include <testing/output_capture.h>
 
@@ -129,3 +131,12 @@ tests_StdoutResult tests_getBuiltinStdout (
 	return tests_getStdout(&runBuiltin, &parameters, buffer, buffer_size);
 }
 
+void tests_assertStdout(const char *const buffer, const tests_StdoutResult *const results, const char *const string) {
+	assert(buffer != NULL);
+	assert(results != NULL);
+
+	size_t string_length = strlen(string);
+
+	ck_assert_mem_eq(buffer, string, string_length > results->bytes_read ? results->bytes_read : string_length);
+	ck_assert_uint_eq(results->bytes_read, string_length);
+}
