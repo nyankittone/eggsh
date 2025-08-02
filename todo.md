@@ -1,5 +1,9 @@
 # TODO list
 * Create ways to unit test builtin commands
+  * Need to create functions that let me run a fork of the program and return its stdout
+  * For programs like `pwd`, I'll need to create a mock filesystem that contains directories I can 
+    cd into and test with
+    * This would include symbolic links so I can ensure `pwd -P` vs `pwd -L` work as intended
 * Implement the pwd and printf commands
 * Make the `cd` implementation properly POSIX-conforming
 * Implement a command for generating random numbers
