@@ -15,6 +15,7 @@ int bruh(void *whatever) {
 int main(void) {
     SRunner *suite_runner = srunner_create(tests_tokenizerSuite());
     srunner_add_suite(suite_runner, tests_hashMapSuite());
+    srunner_add_suite(suite_runner, tests_echoSuite());
 
     srunner_run_all(suite_runner, CK_VERBOSE);
     int failed_tests = srunner_ntests_failed(suite_runner);
@@ -29,11 +30,6 @@ int main(void) {
         total_tests,
         failed_tests == 0 ? "🎉 🎉 🎉" : "¯\\_(ツ)_/¯"
     );
-
-    char buffer[69];
-    tests_StdoutResult result = tests_getBuiltinStdout(NULL, buffer, sizeof(buffer), "echo", "Hello,", "world!", ":3", NULL);
-    puts("test function says:");
-    fwrite(buffer, 1, result.bytes_read, stdout);
 
     return failed_tests > 127 ? 127 : failed_tests;
 }

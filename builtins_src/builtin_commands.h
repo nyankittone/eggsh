@@ -4,6 +4,9 @@
 
 #ifdef RUN_TESTS
     #include <check.h>
+    #include <testing/output_capture.h>
+
+    #define NORMAL_BUFFER_SIZE (1024)
 #endif
 
 // This macro defines or declares a function for specifying built-in commands. Any built-in command

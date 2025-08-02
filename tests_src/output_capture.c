@@ -137,6 +137,7 @@ void tests_assertStdout(const char *const buffer, const tests_StdoutResult *cons
 
 	size_t string_length = strlen(string);
 
-	ck_assert_mem_eq(buffer, string, string_length > results->bytes_read ? results->bytes_read : string_length);
+
+	ck_assert_str_eq(buffer, string);
 	ck_assert_uint_eq(results->bytes_read, string_length);
 }
