@@ -1,11 +1,12 @@
 release_flags := -O3 -DNDEBUG
 debug_flags := -Og -g -ggdb
-test_flags := -lcheck -DRUN_TESTS $(debug_flags)
+test_flags := -lcheck -DRUN_TESTS $(debug_flags) -Itests_include
 
 program_name := eggsh
 debug_program_name := eggsh-dbg
 source_dir := src
 builtins_source_dir := builtins_src
+tests_source_dir := tests_src
 
 object_dir := obj
 normal_object_dir := $(object_dir)/normal
@@ -16,9 +17,10 @@ gperf_filename := $(builtins_source_dir)/builtins_map
 
 sources := $(wildcard $(source_dir)/*.c)
 builtins_sources := $(wildcard $(builtins_source_dir)/*.c) $(gperf_filename).c
+tests_sources := $(wildcard $(tests_source_dir)/*.c)
 
 objects := $(patsubst $(source_dir)/%.c,$(normal_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(normal_object_dir)/builtin_%.o,$(builtins_sources))
-test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(test_object_dir)/builtin_%.o,$(builtins_sources))
+test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(test_object_dir)/builtin_%.o,$(builtins_sources)) $(patsubst $(tests_source_dir)/%.c,$(test_object_dir)/tests_%.o,$(tests_sources))
 debug_objects := $(patsubst $(source_dir)/%.c,$(debug_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(debug_object_dir)/builtin_%.o,$(builtins_sources))
 
 CC := cc
@@ -57,6 +59,9 @@ $(debug_object_dir)/%.o: $(source_dir)/%.c | $(debug_object_dir)
 	$(CC) $(CFLAGS) $(debug_flags) -c $< -o $@
 
 $(test_object_dir)/%.o: $(source_dir)/%.c | $(test_object_dir)
+	$(CC) $(CFLAGS) $(test_flags) -c $< -o $@
+
+$(test_object_dir)/tests_%.o: $(tests_source_dir)/%.c | $(test_object_dir)
 	$(CC) $(CFLAGS) $(test_flags) -c $< -o $@
 
 $(normal_object_dir)/builtin_%.o: $(builtins_source_dir)/%.c | $(normal_object_dir)

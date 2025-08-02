@@ -1,9 +1,16 @@
+#include "output_capture.h"
 #include <stdio.h>
 
 #include <check.h>
 
 #include <tokenizer.h>
 #include <hash_map.h>
+
+int bruh(void *whatever) {
+    puts("Meow!");
+
+    return 69;
+}
 
 int main(void) {
     SRunner *suite_runner = srunner_create(tests_tokenizerSuite());
@@ -22,6 +29,11 @@ int main(void) {
         total_tests,
         failed_tests == 0 ? "🎉 🎉 🎉" : "¯\\_(ツ)_/¯"
     );
+
+    char buffer[69];
+    tests_StdoutResult result = tests_getBuiltinStdout(NULL, buffer, sizeof(buffer), "echo", "Hello,", "world!", ":3", NULL);
+    puts("test function says:");
+    fwrite(buffer, 1, result.bytes_read, stdout);
 
     return failed_tests > 127 ? 127 : failed_tests;
 }

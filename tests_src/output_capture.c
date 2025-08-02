@@ -1,6 +1,11 @@
+#include <stdio.h>
+
+#include "builtin_commands.h"
+#include <stdarg.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <output_capture.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -60,9 +65,68 @@ tests_StdoutResult tests_getStdout (
 	// TODO: add this check in the for loop above...
 	if(total_bytes_read == buffer_size) {
 		buffer[buffer_size - 1] = '\0';
-		return (tests_StdoutResult) {true, total_bytes_read};
+		return (tests_StdoutResult) {true, total_bytes_read, exit_info};
 	}
 
 	buffer[total_bytes_read] = '\0';
-	return (tests_StdoutResult) {false, total_bytes_read};
+	return (tests_StdoutResult) {false, total_bytes_read, exit_info};
 }
+
+typedef struct {
+	BuiltinPtr func;
+	int argc;
+	char **argv;
+	void *extra;
+} RunBuiltinParameters;
+
+static int runBuiltin(void *parameters) {
+	const RunBuiltinParameters *const casted_parameters = parameters;
+
+	return casted_parameters->func (
+		casted_parameters->argv
+	);
+}
+
+tests_StdoutResult tests_getBuiltinStdout (
+	void *extra, char *const buffer, size_t buffer_size, char *command_name, ...
+) {
+	assert(command_name != NULL);
+
+	// Look up the builtin command.
+	BuiltinPtr command_func;
+	{
+		const BuiltinAndKey *keyval = getShellBuiltin(command_name, strlen(command_name));
+		assert(keyval != NULL);
+		command_func = keyval->function;
+	}
+
+	va_list list;
+	va_start(list, command_name);
+
+	// get how many args there are. This will later be useful when I add argc to the builtin command
+	// interface.
+	int argc = 1;
+	for(; va_arg(list, char*) != NULL; argc++);
+	va_end(list);
+
+	// Creating array of strings to pass into the builtin command
+	char *argv[argc + 1];
+	argv[0] = command_name;
+
+	// Copying over values into array to pass
+	va_start(list, command_name);
+	for(int i = 1; i <= argc; i++) {
+		argv[i] = va_arg(list, char*);
+	}
+	va_end(list);
+
+	RunBuiltinParameters parameters = {
+		.func = command_func,
+		.argc = argc,
+		.argv = argv,
+		.extra = extra,
+	};
+
+	return tests_getStdout(&runBuiltin, &parameters, buffer, buffer_size);
+}
+
