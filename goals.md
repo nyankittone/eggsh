@@ -10,7 +10,7 @@
   built-in commands. Every builtin should support `--version` and `--help`, as long as POSIX
   doesn't strictly forbid doing so. There should be a `help` builtin that shows a summary of help
   for builtins and also external commands. the `help` builtin should also have the option to provide
-  more in-depth information about a builtin ro some functionality, explaining what the thing does,
+  more in-depth information about a builtin or some functionality, explaining what the thing does,
   where it comes from, its rationale, how to use it, the parameters and options it takes, and
   examples of all of this. I may want to have both traditional manpages for this and also something
   more in-depth and interactive.
@@ -19,8 +19,12 @@
   autocomplete, built-in and configurable command suggestions when the user types something in
   wrong, and whatever else I can think of.
 * Eggsh should *feel* fast to use interactively. There should be no perceivable delay when starting
-  the shell or running commands. Performance of running shell scripts is also important, but not as
-  high-priority as making things feel smooth interactively.
+  the shell or running commands. Performance of running shell scripts is also important.
 * Eggsh should have *some* kind of module and/or configuration system that is fast to load from
   (i.e. not executing shell commands).
+
+# What are NOT design goals of Eggsh?
+* Making heavy use of multithreading. Maybe a couple threads here and there, but overall, the
+  program will probably be single-threaded.
+* Windows support. My shell is built for POSIX and POSIX only.
 
