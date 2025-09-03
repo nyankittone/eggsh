@@ -9,5 +9,5 @@ if [ "$exit_code" -gt 0 ]; then
 fi
 
 printf '\33[1;92mProgram built successfully! Running...\33[m\n' >&2
-exec "$program_name" "$@"
+exec ./"$program_name" "$@"
 
