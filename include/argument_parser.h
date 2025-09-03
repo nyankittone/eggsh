@@ -17,7 +17,9 @@
 // * Should have good support for subcommands. A command like `help` should be able to scan through
 //   a struct of a command schema and pull out subcommands to read help from.
 
-// We probably want a more sophisticated type used for on_fail than a simple integer.
+// We probably want a more sophisticated type used for on_fail than a simple integer. Purrhaps a
+// special "compound error" type is in the works too? A good argument parser really could use good
+// error handling.
 typedef struct {
     bool is_ok;
     int on_fail;
@@ -90,6 +92,6 @@ typedef struct {
     } data;
 } CommandIteration;
 
-CommandIterator newParserIterator(const int argc, const int argv, CommandSchema *const command);
+CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command);
 CommandIteration parseArgs(CommandIterator *const iterator);
 
