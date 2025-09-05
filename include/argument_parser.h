@@ -32,7 +32,8 @@ typedef ConverterResult (*ConverterFunction) (
 typedef struct {
     char *name;
     char *highlighting; // String containing ANSI escape sequence to use for highlighting
-    ConverterFunction converter;
+    ConverterFunction converter; // I may want to add more functions like this in the future if
+                                 // needed.
 } ShellType;
 
 typedef struct {
@@ -45,24 +46,25 @@ typedef struct {
     char **long_options;
 
     // TODO: Might place the below fields in its own struct type for more modular design if needed.
-    uint id;
+    int id;
     char *description;
     OptionParameter *parameters; // TODO: Make this a fixed array... maybe.
 } CommandOption;
 
 typedef struct CommandSchema {
     char name[COMMAND_NAME_MAX]; // This is a char array that is 32 bytes in size.
-    uint id; // It's questionable if this data point should exist for the root command.
+    int id; // It's questionable if this data point should exist for the root command.
 
     char *short_description, *header, *footer;
 
     // function ptr used for displaying help. This includes displaying the command synopsis,
     // printing the header and footer text, and the list of options.
-    void (*displayHelp)(const struct CommandSchema *const command);
+    void (*displayHelp)(const struct CommandSchema *const command, char **command_line);
 
     CommandOption *options; // NULL-terminated list of all supported flags for this command
-    struct CommandSchema *subcommands; // NULL-terminated list of all subcommands for this command
-    // I may change the above two to be fixed arrays rather than pointers for speed purposes...
+
+    u8f subcommand_count;
+    struct CommandSchema *subcommands; // list of all subcommands for this command
 } CommandSchema;
 
 // Basic iterator type for the default argument parser provided. Could change this to an interface
@@ -71,6 +73,8 @@ typedef struct {
     int remaining_argc;
     char **remaining_argv;
     CommandSchema *const command;
+    const char *current_short_option; // Used to track the short option we're on for a parameter
+                                      // between iterations
 } CommandIterator;
 
 // idk fully what I'm cooking here with this data type...
@@ -91,6 +95,9 @@ typedef struct {
         } on_fail;
     } data;
 } CommandIteration;
+
+#define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE,})
+#define NO_OPTION_ID ((int) -1)
 
 CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command);
 CommandIteration parseArgs(CommandIterator *const iterator);
