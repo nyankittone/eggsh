@@ -12,7 +12,7 @@ int handlePositionalOrSubcommand (
         if(!strcmp(string, subcommand->name)) return subcommand->id;
     }
 
-    *(next_positional++) = string;
+    if(next_positional) *(next_positional++) = string;
     return NO_OPTION_ID;
 }
 
@@ -52,7 +52,17 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
     for(; iterator->remaining_argc; iterator->remaining_argv++, iterator->remaining_argc--) {
         if(**iterator->remaining_argv != '-') {
             // we are either a subcommand or a positional argument
+            // This code isn't made *that* much more simple by moving side effects into it. Like, at
+            // all.
+            const int subcommand_id = handlePositionalOrSubcommand (
+                iterator->command, *iterator->remaining_argv, NULL
+            );
 
+            if(subcommand_id == NO_OPTION_ID) continue;
+
+            iterator->remaining_argv++;
+            iterator->remaining_argc--;
+            return mCmdIterSubcommand(subcommand_id);
         } else {
             // we are likely an option
         }

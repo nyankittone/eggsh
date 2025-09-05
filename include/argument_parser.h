@@ -96,7 +96,8 @@ typedef struct {
     } data;
 } CommandIteration;
 
-#define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE,})
+#define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE})
+#define mCmdIterSubcommand(id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .data.on_success = (id)})
 #define NO_OPTION_ID ((int) -1)
 
 CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command);
