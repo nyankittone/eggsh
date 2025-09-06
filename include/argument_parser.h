@@ -75,6 +75,8 @@ typedef struct {
     CommandSchema *const command;
     const char *current_short_option; // Used to track the short option we're on for a parameter
                                       // between iterations
+    int positional_argc;
+    char **positional_argv;
 } CommandIterator;
 
 // idk fully what I'm cooking here with this data type...
@@ -87,7 +89,7 @@ typedef struct {
     } status;
     union {
         struct {
-            uint id;
+            int id;
             ConverterFunction converter; // I believe this should be NULL on a subcommand???
         } on_success;
         struct {
@@ -97,9 +99,9 @@ typedef struct {
 } CommandIteration;
 
 #define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE})
-#define mCmdIterSubcommand(id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .data.on_success = (id)})
+#define mCmdIterSubcommand(the_id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .data.on_success.id = (the_id)})
 #define NO_OPTION_ID ((int) -1)
 
-CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command);
+CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command, char **positional_args);
 CommandIteration parseArgs(CommandIterator *const iterator);
 

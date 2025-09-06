@@ -3,25 +3,24 @@
 #include <stddef.h>
 #include <argument_parser.h>
 
-int handlePositionalOrSubcommand (
-    const CommandSchema *const command, char *const string, char **next_positional
-) {
+int isSubcommand(const CommandSchema *const command, char *const string) {
     // TODO: This function *could* be optimized if we cache the subcommand strings in a hash map
     for(u8f i = 0; i < command->subcommand_count; i++) {
         const CommandSchema *const subcommand = command->subcommands + i;
         if(!strcmp(string, subcommand->name)) return subcommand->id;
     }
 
-    if(next_positional) *(next_positional++) = string;
     return NO_OPTION_ID;
 }
 
-CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command) {
+CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command, char **positional_args) {
     return (CommandIterator) {
         .remaining_argc = argc,
         .remaining_argv = argv,
         .command = command,
         .current_short_option = NULL,
+        .positional_argc = 0,
+        .positional_argv = positional_args,
     };
 }
 
@@ -52,13 +51,11 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
     for(; iterator->remaining_argc; iterator->remaining_argv++, iterator->remaining_argc--) {
         if(**iterator->remaining_argv != '-') {
             // we are either a subcommand or a positional argument
-            // This code isn't made *that* much more simple by moving side effects into it. Like, at
-            // all.
-            const int subcommand_id = handlePositionalOrSubcommand (
-                iterator->command, *iterator->remaining_argv, NULL
-            );
-
-            if(subcommand_id == NO_OPTION_ID) continue;
+            const int subcommand_id = isSubcommand(iterator->command, *iterator->remaining_argv);
+            if(subcommand_id == NO_OPTION_ID) {
+                iterator->positional_argv[iterator->positional_argc++] = *iterator->remaining_argv;
+                continue;
+            }
 
             iterator->remaining_argv++;
             iterator->remaining_argc--;
