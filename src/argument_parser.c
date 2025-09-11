@@ -13,6 +13,18 @@ int isSubcommand(const CommandSchema *const command, char *const string) {
     return NO_OPTION_ID;
 }
 
+typedef enum {
+    ARGPARSE_OPT_NOT,
+    ARGPARSE_OPT_SHORT,
+    ARGPARSE_OPT_LONG,
+} ArgumentOptionType;
+
+ArgumentOptionType getArgOptionType(const char *const parameter) {
+    assert(parameter != NULL);
+    return *parameter == '-' ? (parameter[1] == '-' ? ARGPARSE_OPT_LONG : ARGPARSE_OPT_SHORT)
+        : ARGPARSE_OPT_NOT;
+}
+
 CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command, char **positional_args) {
     return (CommandIterator) {
         .remaining_argc = argc,
@@ -49,22 +61,42 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
     // Let's try to split this function up into really tiny functions more than normal, to encourage
     // re-use of components!
     for(; iterator->remaining_argc; iterator->remaining_argv++, iterator->remaining_argc--) {
-        if(**iterator->remaining_argv != '-') {
-            // we are either a subcommand or a positional argument
-            const int subcommand_id = isSubcommand(iterator->command, *iterator->remaining_argv);
-            if(subcommand_id == NO_OPTION_ID) {
-                iterator->positional_argv[iterator->positional_argc++] = *iterator->remaining_argv;
-                continue;
-            }
+        switch(getArgOptionType(*iterator->remaining_argv)) {
+            case ARGPARSE_OPT_NOT:
+            {
+                // we are either a subcommand or a positional argument
+                const int subcommand_id = isSubcommand(iterator->command, *iterator->remaining_argv);
+                if(subcommand_id == NO_OPTION_ID) {
+                    iterator->positional_argv[iterator->positional_argc++] = *iterator->remaining_argv;
+                    continue;
+                }
 
-            iterator->remaining_argv++;
-            iterator->remaining_argc--;
-            return mCmdIterSubcommand(subcommand_id);
-        } else {
-            // we are likely an option
+                iterator->remaining_argv++;
+                iterator->remaining_argc--;
+                return mCmdIterSubcommand(subcommand_id);
+                break;
+            }
+            case ARGPARSE_OPT_SHORT:
+                // TODO: Implement
+                break;
+            case ARGPARSE_OPT_LONG:
+                if(*iterator->remaining_argv[2] == '\0') {
+                    // memmove() the remaining args passed into the positional_args array
+                    iterator->remaining_argv++;
+                    iterator->remaining_argc--;
+
+                    iterator->positional_argc = iterator->remaining_argc;
+                    memmove(iterator->positional_argv, iterator->remaining_argv, iterator->remaining_argc);
+                    iterator->positional_argv[iterator->positional_argc] = NULL;
+                    iterator->remaining_argc = 0;
+                    return FULL_CMD_ITER_DONE;
+                }
+                break;
         }
     }
     
     return FULL_CMD_ITER_DONE;
 }
+
+// TODO: Add tests
 
