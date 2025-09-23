@@ -4,7 +4,8 @@
 #include <argument_parser.h>
 
 int isSubcommand(const CommandSchema *const command, char *const string) {
-    // TODO: This function *could* be optimized if we cache the subcommand strings in a hash map
+    // TODO: This function *could* be optimized if we cache the subcommand strings in a hash map. Is
+    // that something even worht doing? Idk. Probably not, but I may want to think about it later.
     for(u8f i = 0; i < command->subcommand_count; i++) {
         const CommandSchema *const subcommand = command->subcommands + i;
         if(!strcmp(string, subcommand->name)) return subcommand->id;
@@ -91,6 +92,24 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator->remaining_argc = 0;
                     return FULL_CMD_ITER_DONE;
                 }
+
+                // Look up the option from the one provided. This might also benefit from a hash map, bc performing a linear search over this makes me feel sad.
+                CommandOption *const option = iterator->command->options;
+                for(u8f i = 0; i < iterator->command->options_count; i++) {
+                    for(char **option_text = option[i].long_options; *option_text; option_text++) {
+                        if(!strcmp(*option_text, *iterator->remaining_argv)) {
+                            // TODO: add code for creating ConverterFunction array to return
+                            return (CommandIteration) {
+                                .status = COMMAND_ITER_PARAMETER,
+                                .data.on_success = {
+                                    .id = option->id, // indentation will go on until morale
+                                                      // improves
+                                },
+                            };
+                        }
+                    }
+                }
+
                 break;
         }
     }

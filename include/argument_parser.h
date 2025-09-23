@@ -5,6 +5,7 @@
 
 #define COMMAND_NODES_PER_NODE (16)
 #define COMMAND_NAME_MAX (32)
+#define COMMAND_OPTION_PARAMETER_LIMIT (5)
 
 // This is a header outlining an argument parser for this codebase.
 // This parser has a few goals:
@@ -43,12 +44,13 @@ typedef struct {
 
 typedef struct {
     char *short_options;
-    char **long_options;
+    char **long_options; // MULL-terminated list of long options. TODO: Experiment with making this
+                         // into a hash map.
 
     // TODO: Might place the below fields in its own struct type for more modular design if needed.
     int id;
     char *description;
-    OptionParameter *parameters; // TODO: Make this a fixed array... maybe.
+    OptionParameter parameters[COMMAND_OPTION_PARAMETER_LIMIT]; // 4 parameters, 1 NULL terminator
 } CommandOption;
 
 typedef struct CommandSchema {
@@ -61,6 +63,10 @@ typedef struct CommandSchema {
     // printing the header and footer text, and the list of options.
     void (*displayHelp)(const struct CommandSchema *const command, char **command_line);
 
+    // TODO: Add limits on how many options and subcommands there can be by making these pointers
+    // into arrays. That might be faster.
+
+    u8f options_count;
     CommandOption *options; // NULL-terminated list of all supported flags for this command
 
     u8f subcommand_count;
@@ -90,7 +96,7 @@ typedef struct {
     union {
         struct {
             int id;
-            ConverterFunction converter; // I believe this should be NULL on a subcommand???
+            ConverterFunction converter[COMMAND_OPTION_PARAMETER_LIMIT]; // I believe the first index should be NULL on a subcommand???
         } on_success;
         struct {
             char *bad_thing;
