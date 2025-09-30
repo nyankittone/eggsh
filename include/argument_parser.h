@@ -42,6 +42,8 @@ typedef struct {
     ShellType *type;
 } OptionParameter;
 
+#define NULL_OPTION_PARAMETER ((OptionParameter) {.name = NULL, .type = NULL})
+
 typedef struct {
     char *short_options;
     char **long_options; // MULL-terminated list of long options. TODO: Experiment with making this
@@ -96,16 +98,17 @@ typedef struct {
     union {
         struct {
             int id;
-            ConverterFunction converter[COMMAND_OPTION_PARAMETER_LIMIT]; // I believe the first index should be NULL on a subcommand???
+            ConverterFunction converters[COMMAND_OPTION_PARAMETER_LIMIT]; // the first index should be NULL on a subcommand
         } on_success;
         struct {
-            char *bad_thing;
+            char *bad_thing; // String representing the bad option or whatever passed.
         } on_fail;
     } data;
 } CommandIteration;
 
 #define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE})
 #define mCmdIterSubcommand(the_id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .data.on_success.id = (the_id)})
+#define mCmdIterBadFlag(bad_flag) ((CommandIteration) {.status = COMMAND_ITER_BAD_FLAG, .data.on_fail.bad_thing = bad_flag})
 #define NO_OPTION_ID ((int) -1)
 
 CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command, char **positional_args);

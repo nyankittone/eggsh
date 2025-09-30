@@ -26,6 +26,42 @@ ArgumentOptionType getArgOptionType(const char *const parameter) {
         : ARGPARSE_OPT_NOT;
 }
 
+void collectArgConverters(ConverterFunction dest[5], const OptionParameter *const params) {
+    // I wonder if SIMD could make this faster. I genuinely don't know.
+    u8f i = 0;
+
+    for(; memcmp(params + i, &NULL_OPTION_PARAMETER, sizeof(OptionParameter)); i++) {
+        dest[i] = params[i].type->converter;
+    }
+
+    dest[i] = NULL;
+}
+
+CommandIteration getLongOptionReturn(const CommandSchema *const command, char *arg) {
+    arg += 2;
+
+    // Look up the option from the one provided. This might also benefit from a hash map, bc
+    // performing a linear search over this makes me feel sad.
+    CommandOption *const option = command->options;
+
+    // Looping through all options, and their long flags inside each option (a single
+    // option can have multiple names/flags)
+    for(u8f i = 0; i < command->options_count; i++) {
+        for(char **option_text = option[i].long_options; *option_text; option_text++) {
+            if(!strcmp(*option_text, arg)) {
+                CommandIteration returned;
+                returned.status = COMMAND_ITER_PARAMETER;
+                returned.data.on_success.id = option->id;
+                collectArgConverters(returned.data.on_success.converters, option->parameters);
+
+                return returned;
+            }
+        }
+    }
+
+    return mCmdIterBadFlag(arg);
+}
+
 CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command, char **positional_args) {
     return (CommandIterator) {
         .remaining_argc = argc,
@@ -81,6 +117,10 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 // TODO: Implement
                 break;
             case ARGPARSE_OPT_LONG:
+
+                // If the long option is just a "--", then all other arguments passed will be
+                // positional arguments. Shove all the args into the positional arg array and
+                // return.
                 if(*iterator->remaining_argv[2] == '\0') {
                     // memmove() the remaining args passed into the positional_args array
                     iterator->remaining_argv++;
@@ -93,22 +133,11 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     return FULL_CMD_ITER_DONE;
                 }
 
-                // Look up the option from the one provided. This might also benefit from a hash map, bc performing a linear search over this makes me feel sad.
-                CommandOption *const option = iterator->command->options;
-                for(u8f i = 0; i < iterator->command->options_count; i++) {
-                    for(char **option_text = option[i].long_options; *option_text; option_text++) {
-                        if(!strcmp(*option_text, *iterator->remaining_argv)) {
-                            // TODO: add code for creating ConverterFunction array to return
-                            return (CommandIteration) {
-                                .status = COMMAND_ITER_PARAMETER,
-                                .data.on_success = {
-                                    .id = option->id, // indentation will go on until morale
-                                                      // improves
-                                },
-                            };
-                        }
-                    }
-                }
+
+                CommandIteration returned = getLongOptionReturn(iterator->command, *iterator->remaining_argv);
+                iterator->remaining_argv++;
+                iterator->remaining_argc--;
+                return returned;
 
                 break;
         }
