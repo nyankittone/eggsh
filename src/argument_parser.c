@@ -123,6 +123,22 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 // that dynamically decides if that should cause an error, simply be ignored, or
                 // treated as a positional arg/subcommand.
 
+
+    if(iterator->current_short_option) {
+        for(; *iterator->current_short_option; iterator->current_short_option++) {
+            // iterate through options
+            // NOTE: I will 100% have to make this into some kind of array for quick lookup.
+            CommandIteration maybe_returned = getShortOptionReturn (
+                    iterator->command, *iterator->current_short_option
+                    );
+
+            if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
+
+            iterator->current_short_option++;
+            return maybe_returned;
+        }
+    }
+
     // Let's try to split this function up into really tiny functions more than normal, to encourage
     // re-use of components!
     for(; iterator->remaining_argc; iterator->remaining_argv++, iterator->remaining_argc--) {
@@ -148,22 +164,14 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 for(; *iterator->current_short_option; iterator->current_short_option++) {
                     // iterate through options
                     // NOTE: I will 100% have to make this into some kind of array for quick lookup.
-                    CommandOption *option_array = iterator->command->options;
-                    for(u8f i = 0; i < iterator->command->options_count; i++) {
-                        // iterate through individual option flags
-                        for (
-                            const char *option_flag = option_array[i].short_options;
-                            *option_flag;
-                            option_flag++
-                        ) {
-                            if(*option_flag == *iterator->current_short_option) {
-                                // return with the right option, and then keep the state for
-                                // current_short_option so we can resume where we left off for next
-                                // iteration.
-                            }
-                        }
-                    }
-                    // If no match for a flag occurred, then we need to quick-fire through errors.
+                    CommandIteration maybe_returned = getShortOptionReturn (
+                        iterator->command, *iterator->current_short_option
+                    );
+
+                    if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
+
+                    iterator->current_short_option++;
+                    return maybe_returned;
                 }
 
                 // Setting this to NULL so the code will go down the right path on next iteration
