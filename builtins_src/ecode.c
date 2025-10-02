@@ -13,6 +13,7 @@ mBuiltin(commands_ecode) {
 	}
 	
 	char *hit_end;
+    errno = 0;
 	long returned = strtol(argv[1], &hit_end, 10);
 	if(errno || *(hit_end + strspn(hit_end, " \t\n"))) {
 		fputs("Invalid code passed! (should be a non-negative integer)\n", stderr);
