@@ -90,9 +90,8 @@ typedef struct {
 // idk fully what I'm cooking here with this data type...
 typedef struct {
     enum {
+        COMMAND_ITER_NONE,
         COMMAND_ITER_DONE,
-        COMMAND_ITER_BAD_FLAG,
-        COMMAND_ITER_BAD_SUBCOMMAND,
         COMMAND_ITER_PARAMETER,
     } status;
     union {
@@ -108,7 +107,7 @@ typedef struct {
 
 #define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE})
 #define mCmdIterSubcommand(the_id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .data.on_success.id = (the_id)})
-#define mCmdIterBadFlag(bad_flag) ((CommandIteration) {.status = COMMAND_ITER_BAD_FLAG, .data.on_fail.bad_thing = bad_flag})
+#define FULL_CMD_ITER_NONE ((CommandIteration) {.status = COMMAND_ITER_NONE})
 #define NO_OPTION_ID ((int) -1)
 
 CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command, char **positional_args);

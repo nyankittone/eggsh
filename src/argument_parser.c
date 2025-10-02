@@ -42,24 +42,52 @@ CommandIteration getLongOptionReturn(const CommandSchema *const command, char *a
 
     // Look up the option from the one provided. This might also benefit from a hash map, bc
     // performing a linear search over this makes me feel sad.
-    CommandOption *const option = command->options;
+    CommandOption *const option_array = command->options;
 
     // Looping through all options, and their long flags inside each option (a single
     // option can have multiple names/flags)
     for(u8f i = 0; i < command->options_count; i++) {
-        for(char **option_text = option[i].long_options; *option_text; option_text++) {
+        for(char **option_text = option_array[i].long_options; *option_text; option_text++) {
             if(!strcmp(*option_text, arg)) {
                 CommandIteration returned;
                 returned.status = COMMAND_ITER_PARAMETER;
-                returned.data.on_success.id = option->id;
-                collectArgConverters(returned.data.on_success.converters, option->parameters);
+                returned.data.on_success.id = option_array[i].id;
+                collectArgConverters(returned.data.on_success.converters, option_array[i].parameters);
 
                 return returned;
             }
         }
     }
 
-    return mCmdIterBadFlag(arg);
+    // If we're running code here, that means the flag passed is invalid.
+    return FULL_CMD_ITER_NONE;
+}
+
+CommandIteration getShortOptionReturn(const CommandSchema *const command, const char tested_flag) {
+    // iterate through options
+    // NOTE: I will 100% have to make this into some kind of array for quick lookup.
+    CommandOption *option_array = command->options;
+    for(u8f i = 0; i < command->options_count; i++) {
+        // iterate through individual option flags
+        for (
+            const char *known_flag = option_array[i].short_options;
+            *known_flag;
+            known_flag++
+        ) {
+            if(*known_flag == tested_flag) {
+                CommandIteration returned;
+                returned.status = COMMAND_ITER_PARAMETER;
+                returned.data.on_success.id = option_array[i].id;
+                collectArgConverters(returned.data.on_success.converters, option_array[i].parameters);
+
+                return returned;
+            }
+        }
+    }
+
+    // If no match for a flag occurred, then return with none and set an error. TODO: add an error
+    // data type to set and return.
+    return FULL_CMD_ITER_NONE;
 }
 
 CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *const command, char **positional_args) {
