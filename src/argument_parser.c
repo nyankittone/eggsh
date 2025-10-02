@@ -111,10 +111,35 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 iterator->remaining_argv++;
                 iterator->remaining_argc--;
                 return mCmdIterSubcommand(subcommand_id);
-                break;
             }
             case ARGPARSE_OPT_SHORT:
-                // TODO: Implement
+                // Iterate through all options and their short options to find a matching char. This
+                // also could theoretically benefit from a hash map.
+
+                iterator->current_short_option = *iterator->remaining_argv + 1;
+                for(; *iterator->current_short_option; iterator->current_short_option++) {
+                    // iterate through options
+                    // NOTE: I will 100% have to make this into some kind of array for quick lookup.
+                    CommandOption *option_array = iterator->command->options;
+                    for(u8f i = 0; i < iterator->command->options_count; i++) {
+                        // iterate through individual option flags
+                        for (
+                            const char *option_flag = option_array[i].short_options;
+                            *option_flag;
+                            option_flag++
+                        ) {
+                            if(*option_flag == *iterator->current_short_option) {
+                                // return with the right option, and then keep the state for
+                                // current_short_option so we can resume where we left off for next
+                                // iteration.
+                            }
+                        }
+                    }
+                    // If no match for a flag occurred, then we need to quick-fire through errors.
+                }
+
+                // Setting this to NULL so the code will go down the right path on next iteration
+                iterator->current_short_option = NULL; 
                 break;
             case ARGPARSE_OPT_LONG:
 
@@ -137,9 +162,11 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 CommandIteration returned = getLongOptionReturn(iterator->command, *iterator->remaining_argv);
                 iterator->remaining_argv++;
                 iterator->remaining_argc--;
-                return returned;
 
-                break;
+                // Do we want to return on an error? I don't think so; we should blast through the
+                // rest of everything as quick as we can while catching other errors, THEN return.
+                // TODO: Implement the above.
+                return returned;
         }
     }
     
