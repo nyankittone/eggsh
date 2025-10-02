@@ -125,18 +125,20 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
 
 
     if(iterator->current_short_option) {
-        for(; *iterator->current_short_option; iterator->current_short_option++) {
-            // iterate through options
-            // NOTE: I will 100% have to make this into some kind of array for quick lookup.
-            CommandIteration maybe_returned = getShortOptionReturn (
-                    iterator->command, *iterator->current_short_option
-                    );
+        // NOTE: I will 100% have to make this into some kind of array for quick lookup.
+        CommandIteration maybe_returned = getShortOptionReturn (
+            iterator->command, *iterator->current_short_option
+        );
 
-            if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
+        if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
 
-            iterator->current_short_option++;
-            return maybe_returned;
+        if(!*(++iterator->current_short_option)) {
+            iterator->current_short_option = NULL;
+            iterator->remaining_argv++;
+            iterator->remaining_argc--;
         }
+
+        return maybe_returned;
     }
 
     // Let's try to split this function up into really tiny functions more than normal, to encourage
@@ -161,21 +163,23 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 // also could theoretically benefit from a hash map.
 
                 iterator->current_short_option = *iterator->remaining_argv + 1;
-                for(; *iterator->current_short_option; iterator->current_short_option++) {
-                    // iterate through options
-                    // NOTE: I will 100% have to make this into some kind of array for quick lookup.
-                    CommandIteration maybe_returned = getShortOptionReturn (
-                        iterator->command, *iterator->current_short_option
-                    );
+                // NOTE: I will 100% have to make this into some kind of array for quick lookup.
+                CommandIteration maybe_returned = getShortOptionReturn (
+                    iterator->command, *iterator->current_short_option
+                );
 
-                    if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
-
-                    iterator->current_short_option++;
-                    return maybe_returned;
-                }
+                if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
 
                 // Setting this to NULL so the code will go down the right path on next iteration
-                iterator->current_short_option = NULL; 
+                // We should likely also incriment 
+                if(!*(++iterator->current_short_option)) {
+                    iterator->current_short_option = NULL;
+                    iterator->remaining_argv++;
+                    iterator->remaining_argc--;
+                }
+
+                return maybe_returned;
+
                 break;
             case ARGPARSE_OPT_LONG:
 
