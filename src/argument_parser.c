@@ -1,3 +1,4 @@
+#include "util.h"
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
@@ -106,31 +107,13 @@ CommandIterator newParserIterator(const int argc, char **argv, CommandSchema *co
 CommandIteration parseArgs(CommandIterator *const iterator) {
     assert(iterator != NULL);
 
-    // TODO: brainstorm how to do this function...
-    // Go through each argv value one-by-one
-    // Check if the string starts with a '-'.
-        // If no, then that's either a subcommand or positional argument.
-        // Check if there are subcommands for this command. If no, then add a positional argument.
-        // Else, see if the argument we're looking at is in the subcommand list.
-            // If yes, return with the ID for that subcommand.
-            // Else, return an error and move to the next argument for the next iteration.
-        // If yes, that means it's probably an option. Now we need to check if there's *another*
-        //   dash immediately after that.
-            // If no, is that where the string ends? If yes, go to the part checking if it's a
-            //   positional arg or a subcommand. Else, it's a short option or series of. Scan the
-            //   remaining string for short options.
-                // If we see an invalid option, short or long, we'll need something in the iterator
-                // that dynamically decides if that should cause an error, simply be ignored, or
-                // treated as a positional arg/subcommand.
-
-
     if(iterator->current_short_option) {
         // NOTE: I will 100% have to make this into some kind of array for quick lookup.
         CommandIteration maybe_returned = getShortOptionReturn (
             iterator->command, *iterator->current_short_option
         );
 
-        if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
+        if(maybe_returned.status == COMMAND_ITER_NONE) {panic(69, "Placeholder error\n");} // TODO: add error handling!
 
         if(!*(++iterator->current_short_option)) {
             iterator->current_short_option = NULL;
@@ -168,10 +151,10 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator->command, *iterator->current_short_option
                 );
 
-                if(maybe_returned.status == COMMAND_ITER_NONE) {} // TODO: add error handling!
+                if(maybe_returned.status == COMMAND_ITER_NONE) {panic(69, "Placeholder error\n");} // TODO: add error handling!
 
                 // Setting this to NULL so the code will go down the right path on next iteration
-                // We should likely also incriment 
+                // We should likely also increment 
                 if(!*(++iterator->current_short_option)) {
                     iterator->current_short_option = NULL;
                     iterator->remaining_argv++;
@@ -197,7 +180,6 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator->remaining_argc = 0;
                     return FULL_CMD_ITER_DONE;
                 }
-
 
                 CommandIteration returned = getLongOptionReturn(iterator->command, *iterator->remaining_argv);
                 iterator->remaining_argv++;
