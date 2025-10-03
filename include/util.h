@@ -9,6 +9,7 @@
 
 #define FATAL_ERROR_TEXT "\33[1;91mfatal:\33[m "
 #define REALLY_FATAL_ERROR_TEXT "\33[1;91mKILL IT WITH FIRE:\33[m "
+#define NULL_STRUCT {0}
 
 enum ExitCode {
     EXIT_PARSING_FAILURE = 1,

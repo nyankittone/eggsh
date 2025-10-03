@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <rusttypes.h>
+#include <util.h>
 
 #define COMMAND_NODES_PER_NODE (16)
 #define COMMAND_NAME_MAX (32)
@@ -42,11 +43,11 @@ typedef struct {
     ShellType *type;
 } OptionParameter;
 
-#define NULL_OPTION_PARAMETER ((OptionParameter) {.name = NULL, .type = NULL})
+#define NULL_OPTION_PARAMETER ((OptionParameter) {0})
 
 typedef struct {
     char *short_options;
-    char **long_options; // MULL-terminated list of long options. TODO: Experiment with making this
+    char *long_options[8]; // NULL-terminated list of long options. TODO: Experiment with making this
                          // into a hash map.
 
     // TODO: Might place the below fields in its own struct type for more modular design if needed.
@@ -54,6 +55,8 @@ typedef struct {
     char *description;
     OptionParameter parameters[COMMAND_OPTION_PARAMETER_LIMIT]; // 4 parameters, 1 NULL terminator
 } CommandOption;
+
+#define NULL_OPTION ((CommandOption) {0})
 
 typedef struct CommandSchema {
     char name[COMMAND_NAME_MAX]; // This is a char array that is 32 bytes in size.
@@ -69,7 +72,7 @@ typedef struct CommandSchema {
     // into arrays. That might be faster.
 
     u8f options_count;
-    CommandOption *options; // NULL-terminated list of all supported flags for this command
+    CommandOption options[32]; // List of all supported flags for this command
 
     u8f subcommand_count;
     struct CommandSchema *subcommands; // list of all subcommands for this command

@@ -5,6 +5,31 @@
 #include <tokenizer.h>
 #include <command_runner.h>
 #include <resource_shortcut.h>
+#include <argument_parser.h>
+
+const CommandSchema command_line = {
+    .name = "eggsh",
+    .id = 0,
+    .subcommand_count = 0, // TODO: should I make this so that the subcommand list is
+                           // NULL-terminated?
+
+    .short_description = "A fast, friendly, yet familiar shell for UNIX",
+    .header = NULL,
+    .footer = NULL,
+    .displayHelp = NULL,
+
+    .options = {
+        {
+            .id = 1,
+            .short_options = "c",
+            .long_options = {"string", NULL},
+            
+            .description = "Execute the text passed by the argument passed to this option",
+            .parameters = {NULL_STRUCT},
+        },
+        NULL_STRUCT
+    },
+};
 
 void runFile(int file_descriptor, CommandRunner *const runner) {
     // assert that the file passed in is valid

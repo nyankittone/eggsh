@@ -38,7 +38,7 @@ void collectArgConverters(ConverterFunction dest[5], const OptionParameter *cons
     dest[i] = NULL;
 }
 
-CommandIteration getLongOptionReturn(const CommandSchema *const command, char *arg) {
+CommandIteration getLongOptionReturn(CommandSchema *const command, char *arg) {
     arg += 2;
 
     // Look up the option from the one provided. This might also benefit from a hash map, bc
@@ -67,7 +67,7 @@ CommandIteration getLongOptionReturn(const CommandSchema *const command, char *a
 CommandIteration getShortOptionReturn(const CommandSchema *const command, const char tested_flag) {
     // iterate through options
     // NOTE: I will 100% have to make this into some kind of array for quick lookup.
-    CommandOption *option_array = command->options;
+    const CommandOption *option_array = command->options;
     for(u8f i = 0; i < command->options_count; i++) {
         // iterate through individual option flags
         for (
