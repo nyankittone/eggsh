@@ -24,11 +24,11 @@
 // error handling.
 typedef struct {
     bool is_ok;
-    int on_fail;
+    int on_fail; // TODO: Replace this with an actual error type!
 } ConverterResult;
 
 typedef ConverterResult (*ConverterFunction) (
-    int remaining_argc, char **remaining_argv, void *const target
+    char *const arg, void *const outupt
 );
 
 typedef struct {

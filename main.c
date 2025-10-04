@@ -7,9 +7,14 @@
 #include <resource_shortcut.h>
 #include <argument_parser.h>
 
+enum {
+    ARG_ID_EGGSH,
+    ARG_ID_STRING,
+};
+
 const CommandSchema command_line = {
     .name = "eggsh",
-    .id = 0,
+    .id = ARG_ID_EGGSH,
     .subcommand_count = 0, // TODO: should I make this so that the subcommand list is
                            // NULL-terminated?
 
@@ -20,7 +25,7 @@ const CommandSchema command_line = {
 
     .options = {
         {
-            .id = 1,
+            .id = ARG_ID_STRING,
             .short_options = "c",
             .long_options = {"string", NULL},
             
