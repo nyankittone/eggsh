@@ -6,6 +6,7 @@
 #include <command_runner.h>
 #include <resource_shortcut.h>
 #include <argument_parser.h>
+#include <shell_types.h>
 
 enum {
     ARG_ID_EGGSH,
@@ -27,10 +28,16 @@ const CommandSchema command_line = {
         {
             .id = ARG_ID_STRING,
             .short_options = "c",
-            .long_options = {"string", NULL},
+            .long_options = {"command", NULL},
             
             .description = "Execute the text passed by the argument passed to this option",
-            .parameters = {NULL_STRUCT},
+            .parameters = {
+                {
+                    .name = "command",
+                    .type = &shell_type_string,
+                },
+                NULL_STRUCT
+            },
         },
         NULL_STRUCT
     },
