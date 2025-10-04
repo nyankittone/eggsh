@@ -80,7 +80,7 @@ ShellType shell_type_uint = {
 ShellType shell_type_float = {
     .name = "Float",
     .highlighting = NULL,
-    .converter = NULL,
+    .converter = &toFloat,
 };
 
 ShellType shell_type_string = {
