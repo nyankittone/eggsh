@@ -32,7 +32,7 @@ typedef ConverterResult (*ConverterFunction) (
 );
 
 typedef struct {
-    char *name;
+    char *name, *short_name;
     char *highlighting; // String containing ANSI escape sequence to use for highlighting
     ConverterFunction converter; // I may want to add more functions like this in the future if
                                  // needed.

@@ -67,24 +67,28 @@ static ConverterResult toFloat(char *const arg, void *const output) {
 
 ShellType shell_type_int = {
     .name = "Integer",
+    .short_name = "int",
     .highlighting = NULL,
     .converter = &toInteger,
 };
 
 ShellType shell_type_uint = {
     .name = "Unsigned Integer",
+    .short_name = "uint",
     .highlighting = NULL,
     .converter = &toUnsignedInteger,
 };
 
 ShellType shell_type_float = {
     .name = "Float",
+    .short_name = "float",
     .highlighting = NULL,
     .converter = &toFloat,
 };
 
 ShellType shell_type_string = {
     .name = "String",
+    .short_name = NULL,
     .highlighting = NULL,
     .converter = NULL,
 };
