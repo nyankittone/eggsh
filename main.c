@@ -13,11 +13,10 @@ enum {
     ARG_ID_STRING,
 };
 
-const CommandSchema command_line = {
+static CommandSchema command_line = {
     .name = "eggsh",
     .id = ARG_ID_EGGSH,
-    .subcommand_count = 0, // TODO: should I make this so that the subcommand list is
-                           // NULL-terminated?
+    .subcommand_count = 0,
 
     .short_description = "A fast, friendly, yet familiar shell for UNIX",
     .header = NULL,
@@ -90,9 +89,32 @@ void runFile(int file_descriptor, CommandRunner *const runner) {
     #undef READ_BUFFER_SIZE
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
     #define PATH_MAP_ARRAY_SIZE (8192)
 
+    char *command_string = NULL;
+
+    // parse command line parameters here
+    CommandIterator iterator = newParserIterator(argc - 1, argv + 1, &command_line, argv);
+    for(CommandIteration iteration; (iteration = parseArgs(&iterator)).status != COMMAND_ITER_DONE;) {
+        if(iteration.status == COMMAND_ITER_PARAMETER) switch(iteration.id) {
+            case ARG_ID_STRING:
+                // TODO: Set flag for running code from arbitrary string
+                if (
+                    !iteration.converters[0].converter(iteration.converters[0].convertee, &command_string)
+                    .is_ok
+                ) {
+                    // TODO: do some kinda error handling here. Likely this will be adding to
+                    // the compound error.
+                    fputs("\33[1;91mur mom fat lmao\n", stderr);
+                    return 69;
+                }
+                break;
+        }
+    }
+
+    // This at the moment just sets up the global for the current working directory. This will
+    // change in the future so it's not a global, hopefully.
     initResources();
 
     // allocate a memory arena for all of my hash maps, including the one for your mom

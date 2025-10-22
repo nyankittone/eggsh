@@ -27,33 +27,34 @@ ArgumentOptionType getArgOptionType(const char *const parameter) {
         : ARGPARSE_OPT_NOT;
 }
 
-void collectArgConverters(ConverterFunction dest[5], const OptionParameter *const params) {
+void collectArgConverters(ConverterWithInput dest[5], const OptionParameter *const params, char **relative_argv) {
     // I wonder if SIMD could make this faster. I genuinely don't know.
     u8f i = 0;
 
     for(; memcmp(params + i, &NULL_OPTION_PARAMETER, sizeof(OptionParameter)); i++) {
-        dest[i] = params[i].type->converter;
+        dest[i].converter = params[i].type->converter;
+        dest[i].convertee = relative_argv[i];
     }
 
-    dest[i] = NULL;
+    dest[i] = (ConverterWithInput) {0};
 }
 
-CommandIteration getLongOptionReturn(CommandSchema *const command, char *arg) {
+CommandIteration getLongOptionReturn(CommandIterator *const iterator, char *arg) {
     arg += 2;
 
     // Look up the option from the one provided. This might also benefit from a hash map, bc
     // performing a linear search over this makes me feel sad.
-    CommandOption *const option_array = command->options;
+    CommandOption *const option_array = iterator->command->options;
 
     // Looping through all options, and their long flags inside each option (a single
     // option can have multiple names/flags)
-    for(u8f i = 0; i < command->options_count; i++) {
+    for(u8f i = 0; i < iterator->command->options_count; i++) {
         for(char **option_text = option_array[i].long_options; *option_text; option_text++) {
             if(!strcmp(*option_text, arg)) {
                 CommandIteration returned;
                 returned.status = COMMAND_ITER_PARAMETER;
-                returned.data.on_success.id = option_array[i].id;
-                collectArgConverters(returned.data.on_success.converters, option_array[i].parameters);
+                returned.id = option_array[i].id;
+                collectArgConverters(returned.converters, option_array[i].parameters, iterator->remaining_argv);
 
                 return returned;
             }
@@ -64,11 +65,11 @@ CommandIteration getLongOptionReturn(CommandSchema *const command, char *arg) {
     return FULL_CMD_ITER_NONE;
 }
 
-CommandIteration getShortOptionReturn(const CommandSchema *const command, const char tested_flag) {
+CommandIteration getShortOptionReturn(const CommandIterator *const iterator, const char tested_flag) {
     // iterate through options
     // NOTE: I will 100% have to make this into some kind of array for quick lookup.
-    const CommandOption *option_array = command->options;
-    for(u8f i = 0; i < command->options_count; i++) {
+    const CommandOption *option_array = iterator->command->options;
+    for(u8f i = 0; i < iterator->command->options_count; i++) {
         // iterate through individual option flags
         for (
             const char *known_flag = option_array[i].short_options;
@@ -78,8 +79,8 @@ CommandIteration getShortOptionReturn(const CommandSchema *const command, const 
             if(*known_flag == tested_flag) {
                 CommandIteration returned;
                 returned.status = COMMAND_ITER_PARAMETER;
-                returned.data.on_success.id = option_array[i].id;
-                collectArgConverters(returned.data.on_success.converters, option_array[i].parameters);
+                returned.id = option_array[i].id;
+                collectArgConverters(returned.converters, option_array[i].parameters, iterator->remaining_argv);
 
                 return returned;
             }
@@ -110,7 +111,7 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
     if(iterator->current_short_option) {
         // NOTE: I will 100% have to make this into some kind of array for quick lookup.
         CommandIteration maybe_returned = getShortOptionReturn (
-            iterator->command, *iterator->current_short_option
+            iterator, *iterator->current_short_option
         );
 
         if(maybe_returned.status == COMMAND_ITER_NONE) {panic(69, "Placeholder error\n");} // TODO: add error handling!
@@ -148,7 +149,7 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 iterator->current_short_option = *iterator->remaining_argv + 1;
                 // NOTE: I will 100% have to make this into some kind of array for quick lookup.
                 CommandIteration maybe_returned = getShortOptionReturn (
-                    iterator->command, *iterator->current_short_option
+                    iterator, *iterator->current_short_option
                 );
 
                 if(maybe_returned.status == COMMAND_ITER_NONE) {panic(69, "Placeholder error\n");} // TODO: add error handling!
@@ -181,7 +182,7 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     return FULL_CMD_ITER_DONE;
                 }
 
-                CommandIteration returned = getLongOptionReturn(iterator->command, *iterator->remaining_argv);
+                CommandIteration returned = getLongOptionReturn(iterator, *iterator->remaining_argv);
                 iterator->remaining_argv++;
                 iterator->remaining_argc--;
 

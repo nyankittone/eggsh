@@ -28,8 +28,13 @@ typedef struct {
 } ConverterResult;
 
 typedef ConverterResult (*ConverterFunction) (
-    char *const arg, void *const outupt
+    char *const arg, void *const output
 );
+
+typedef struct {
+    ConverterFunction converter;
+    char *convertee;
+} ConverterWithInput;
 
 typedef struct {
     char *name, *short_name;
@@ -93,23 +98,16 @@ typedef struct {
 // idk fully what I'm cooking here with this data type...
 typedef struct {
     enum {
-        COMMAND_ITER_NONE,
+        COMMAND_ITER_NONE, // I genuinely forgot what the NONE option does over DONE...
         COMMAND_ITER_DONE,
         COMMAND_ITER_PARAMETER,
     } status;
-    union {
-        struct {
-            int id;
-            ConverterFunction converters[COMMAND_OPTION_PARAMETER_LIMIT]; // the first index should be NULL on a subcommand
-        } on_success;
-        struct {
-            char *bad_thing; // String representing the bad option or whatever passed.
-        } on_fail;
-    } data;
+    int id;
+    ConverterWithInput converters[COMMAND_OPTION_PARAMETER_LIMIT]; // the first index should be NULL on a subcommand
 } CommandIteration;
 
 #define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE})
-#define mCmdIterSubcommand(the_id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .data.on_success.id = (the_id)})
+#define mCmdIterSubcommand(the_id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .id = (the_id)})
 #define FULL_CMD_ITER_NONE ((CommandIteration) {.status = COMMAND_ITER_NONE})
 #define NO_OPTION_ID ((int) -1)
 
