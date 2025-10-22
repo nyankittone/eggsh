@@ -173,15 +173,19 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 // positional arguments. Shove all the args into the positional arg array and
                 // return.
                 if((*iterator->remaining_argv)[2] == '\0') {
-                    fputs("I should only show once!\n", stderr);
-
                     // memmove() the remaining args passed into the positional_args array
                     iterator->remaining_argv++;
                     iterator->remaining_argc--;
 
-                    iterator->positional_argc = iterator->remaining_argc;
-                    memmove(iterator->positional_argv, iterator->remaining_argv, iterator->remaining_argc);
+                    memmove (
+                        iterator->positional_argv + iterator->positional_argc,
+                        iterator->remaining_argv,
+                        iterator->remaining_argc * sizeof(iterator->positional_argv[0])
+                    );
+
+                    iterator->positional_argc += iterator->remaining_argc;
                     iterator->positional_argv[iterator->positional_argc] = NULL;
+
                     iterator->remaining_argc = 0;
                     return FULL_CMD_ITER_DONE;
                 }
@@ -190,9 +194,9 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 iterator->remaining_argv++;
                 iterator->remaining_argc--;
 
-                // Do we want to return on an error? I don't think so; we should blast through the
-                // rest of everything as quick as we can while catching other errors, THEN return.
-                // TODO: Implement the above.
+                // On an error, we should not return this, but instead silently add to our error
+                // object, and then return when we get to the next option, or when we hit the end of
+                // our parameters, whatever is first. TODO: Implement error handling here.
                 return returned;
         }
     }
