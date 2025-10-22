@@ -143,6 +143,7 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 return mCmdIterSubcommand(subcommand_id);
             }
             case ARGPARSE_OPT_SHORT:
+                fputs("when you\n", stderr);
                 // Iterate through all options and their short options to find a matching char. This
                 // also could theoretically benefit from a hash map.
 
@@ -166,11 +167,14 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
 
                 break;
             case ARGPARSE_OPT_LONG:
+                fputs("Long option!?!?!\n", stderr);
 
                 // If the long option is just a "--", then all other arguments passed will be
                 // positional arguments. Shove all the args into the positional arg array and
                 // return.
-                if(*iterator->remaining_argv[2] == '\0') {
+                if((*iterator->remaining_argv)[2] == '\0') {
+                    fputs("I should only show once!\n", stderr);
+
                     // memmove() the remaining args passed into the positional_args array
                     iterator->remaining_argv++;
                     iterator->remaining_argc--;
@@ -192,7 +196,9 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 return returned;
         }
     }
-    
+
+    // MULL-terminating the new positional list
+    iterator->positional_argv[iterator->positional_argc] = NULL;
     return FULL_CMD_ITER_DONE;
 }
 
