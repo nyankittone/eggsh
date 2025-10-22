@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <tokenizer.h>
@@ -111,6 +112,16 @@ int main(int argc, char *argv[]) {
                 }
                 break;
         }
+    }
+
+    fputs("positional args:\n", stderr);
+    for(int i = 0; argv[i]; i++) {
+        fprintf(stderr, "%d: \"%s\"\n", i, argv[i]);
+    }
+
+    if(command_string) {
+        printf("Command string set: \"%s\"\n", command_string);
+        return EXIT_SUCCESS;
     }
 
     // This at the moment just sets up the global for the current working directory. This will
