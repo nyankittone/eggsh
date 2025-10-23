@@ -1,8 +1,8 @@
-#include "util.h"
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
 #include <argument_parser.h>
+#include <string.h>
 
 int isSubcommand(const CommandSchema *const command, char *const string) {
     // TODO: This function *could* be optimized if we cache the subcommand strings in a hash map. Is
@@ -65,27 +65,42 @@ CommandIteration getLongOptionReturn(CommandIterator *const iterator, char *arg)
     return FULL_CMD_ITER_NONE;
 }
 
+// I think this function is wrong from the start. We need to loop though options *inside* each flag,
+// not the other way around...
 CommandIteration getShortOptionReturn(const CommandIterator *const iterator, const char tested_flag) {
     // iterate through options
     // NOTE: I will 100% have to make this into some kind of array for quick lookup.
-    const CommandOption *option_array = iterator->command->options;
-    for(u8f i = 0; i < iterator->command->options_count; i++) {
+    const CommandOption *current_option = iterator->command->options;
+    for(; memcmp(current_option, &NULL_OPTION, sizeof(&current_option)); current_option++) { 
+        fputs("ayo we looping here\n", stderr);
         // iterate through individual option flags
         for (
-            const char *known_flag = option_array[i].short_options;
+            const char *known_flag = current_option->short_options;
             *known_flag;
             known_flag++
         ) {
+            fprintf(stderr, "guhhh k:%c t:%c\n", *known_flag, tested_flag);
+
             if(*known_flag == tested_flag) {
+                fputs("passed!?!?\n", stderr);
                 CommandIteration returned;
                 returned.status = COMMAND_ITER_PARAMETER;
-                returned.id = option_array[i].id;
-                collectArgConverters(returned.converters, option_array[i].parameters, iterator->remaining_argv);
+                returned.id = current_option->id;
+                collectArgConverters (
+                    returned.converters, current_option->parameters, iterator->remaining_argv + 1
+                );
+                fputs("nothing happened yet dfggbfdgbdf!?!?\n", stderr);
+                fprintf(stderr, "%s meow\n", returned.converters[0].convertee);
+                fputs("BRUH BRUH BRUH\n", stderr);
+
+                // I may have to mutate the remaining_argv pointer by this point.
 
                 return returned;
             }
         }
     }
+
+    fputs("what\n", stderr);
 
     // If no match for a flag occurred, then return with none and set an error. TODO: add an error
     // data type to set and return.
@@ -167,8 +182,6 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
 
                 break;
             case ARGPARSE_OPT_LONG:
-                fputs("Long option!?!?!\n", stderr);
-
                 // If the long option is just a "--", then all other arguments passed will be
                 // positional arguments. Shove all the args into the positional arg array and
                 // return.
