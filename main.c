@@ -100,17 +100,20 @@ int main(int argc, char *argv[]) {
     for(CommandIteration iteration; (iteration = parseArgs(&iterator)).status != COMMAND_ITER_DONE;) {
         if(iteration.status == COMMAND_ITER_PARAMETER) switch(iteration.id) {
             case ARG_ID_STRING:
+                {
                 // TODO: Set flag for running code from arbitrary string
-                if (
-                    !iteration.converters[0].converter(iteration.converters[0].convertee, &command_string)
-                    .is_ok
-                ) {
+                ConverterResult result = iteration.converters[0].converter(iteration.converters[0].convertee, &command_string);
+                fputs("did I die!\n", stderr);
+
+                if (!result.is_ok) {
                     // TODO: do some kinda error handling here. Likely this will be adding to
                     // the compound error.
                     fputs("\33[1;91mur mom fat lmao\n", stderr);
                     return 69;
                 }
+
                 break;
+                }
         }
     }
 

@@ -65,6 +65,18 @@ static ConverterResult toFloat(char *const arg, void *const output) {
     return returned;
 }
 
+static ConverterResult toString(char *const arg, void *const output) {
+    assert(arg != NULL);
+    assert(output != NULL);
+
+    ConverterResult returned;
+    returned.is_ok = true;
+
+    *(char**)output = arg;
+
+    return returned;
+}
+
 ShellType shell_type_int = {
     .name = "Integer",
     .short_name = "int",
@@ -90,6 +102,6 @@ ShellType shell_type_string = {
     .name = "String",
     .short_name = NULL,
     .highlighting = NULL,
-    .converter = NULL,
+    .converter = &toString,
 };
 

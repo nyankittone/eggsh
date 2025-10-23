@@ -27,7 +27,9 @@ ArgumentOptionType getArgOptionType(const char *const parameter) {
         : ARGPARSE_OPT_NOT;
 }
 
-void collectArgConverters(ConverterWithInput dest[5], const OptionParameter *const params, char **relative_argv) {
+void collectArgConverters (
+    ConverterWithInput dest[5], const OptionParameter *const params, int relative_argc, char **relative_argv
+) {
     // I wonder if SIMD could make this faster. I genuinely don't know.
     u8f i = 0;
 
@@ -54,7 +56,10 @@ CommandIteration getLongOptionReturn(CommandIterator *const iterator, char *arg)
                 CommandIteration returned;
                 returned.status = COMMAND_ITER_PARAMETER;
                 returned.id = option_array[i].id;
-                collectArgConverters(returned.converters, option_array[i].parameters, iterator->remaining_argv);
+                collectArgConverters (
+                    returned.converters, option_array[i].parameters, iterator->remaining_argc - 1,
+                    iterator->remaining_argv + 1
+                );
 
                 return returned;
             }
@@ -65,8 +70,6 @@ CommandIteration getLongOptionReturn(CommandIterator *const iterator, char *arg)
     return FULL_CMD_ITER_NONE;
 }
 
-// I think this function is wrong from the start. We need to loop though options *inside* each flag,
-// not the other way around...
 CommandIteration getShortOptionReturn(const CommandIterator *const iterator, const char tested_flag) {
     // iterate through options
     // NOTE: I will 100% have to make this into some kind of array for quick lookup.
@@ -87,13 +90,12 @@ CommandIteration getShortOptionReturn(const CommandIterator *const iterator, con
                 returned.status = COMMAND_ITER_PARAMETER;
                 returned.id = current_option->id;
                 collectArgConverters (
-                    returned.converters, current_option->parameters, iterator->remaining_argv + 1
+                    returned.converters, current_option->parameters, iterator->remaining_argc - 1,
+                    iterator->remaining_argv + 1
                 );
                 fputs("nothing happened yet dfggbfdgbdf!?!?\n", stderr);
                 fprintf(stderr, "%s meow\n", returned.converters[0].convertee);
                 fputs("BRUH BRUH BRUH\n", stderr);
-
-                // I may have to mutate the remaining_argv pointer by this point.
 
                 return returned;
             }
@@ -168,6 +170,7 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator, *iterator->current_short_option
                 );
 
+
                 if(maybe_returned.status == COMMAND_ITER_NONE) {panic(69, "Placeholder error\n");} // TODO: add error handling!
 
                 // Setting this to NULL so the code will go down the right path on next iteration
@@ -177,6 +180,7 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator->remaining_argv++;
                     iterator->remaining_argc--;
                 }
+                fputs("NYAH!\n", stderr);
 
                 return maybe_returned;
 
