@@ -57,18 +57,18 @@ CommandIteration getLongOptionReturn(CommandIterator *const iterator, char *arg)
 
     // Look up the option from the one provided. This might also benefit from a hash map, bc
     // performing a linear search over this makes me feel sad.
-    CommandOption *const option_array = iterator->command->options;
+    CommandOption *current_option = iterator->command->options;
 
     // Looping through all options, and their long flags inside each option (a single
     // option can have multiple names/flags)
-    for(u8f i = 0; i < iterator->command->options_count; i++) {
-        for(char **option_text = option_array[i].long_options; *option_text; option_text++) {
+    for(; memcmp(current_option, &NULL_OPTION, sizeof(&current_option)); current_option++) {
+        for(char **option_text = current_option->long_options; *option_text; option_text++) {
             if(!strcmp(*option_text, arg)) {
                 CommandIteration returned;
                 returned.status = COMMAND_ITER_PARAMETER;
-                returned.id = option_array[i].id;
+                returned.id = current_option->id;
                 collectArgConverters (
-                    returned.converters, option_array[i].parameters, iterator->remaining_argc - 1,
+                    returned.converters, current_option->parameters, iterator->remaining_argc - 1,
                     iterator->remaining_argv + 1
                 );
 
