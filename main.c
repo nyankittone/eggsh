@@ -1,3 +1,4 @@
+#include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,38 @@ static CommandSchema command_line = {
     },
 };
 
-void runFile(int file_descriptor, CommandRunner *const runner) {
+// Running code from a script or from a string passed on the command line makes the shell run in
+// non-interactive mode. This should be where we have a special flag set indicating that, and the
+// prompt that runs at the end of each command should not display. If we're reading from stdin and
+// stdin is an actual terminal, then we run in interactive mode.
+static void runString(char *const string, CommandRunner *const runner) {
+    puts("what");
+
+    Tokenizer tokenizer = newTokenizer();
+    setTokenizerInput(&tokenizer, string, strlen(string));
+
+    while(true) {
+        TokenizeCommandReturn result = tokenizeBuilderInput(&tokenizer);
+        if(result & (PARSE_COMMAND_HIT_NEWLINE)) {
+            TokenIterator token_iterator = getTokenIterator(&tokenizer);
+
+            for(int i = 0; i < token_iterator.tokens_remaining; i++) {
+                printf("%s$\n", token_iterator.token_ptr + i);
+            }
+
+            executeCommand(runner, &token_iterator);
+            newCommand(&tokenizer);
+        }
+
+        if(result & PARSE_COMMAND_OUT_OF_DATA) {
+            break;
+        }
+    }
+
+    nukeTokenizer(&tokenizer);
+}
+
+static void runFile(int file_descriptor, CommandRunner *const runner) {
     // assert that the file passed in is valid
     // check if the input file descriptor is connected to a TTY. If yes, run in interactive mode.
 
@@ -117,16 +149,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    fputs("positional args:\n", stderr);
-    for(int i = 0; argv[i]; i++) {
-        fprintf(stderr, "%d: \"%s\"\n", i, argv[i]);
-    }
-
-    if(command_string) {
-        printf("Command string set: \"%s\"\n", command_string);
-        return EXIT_SUCCESS;
-    }
-
     // This at the moment just sets up the global for the current working directory. This will
     // change in the future so it's not a global, hopefully.
     initResources();
@@ -136,13 +158,18 @@ int main(int argc, char *argv[]) {
 
     CommandRunner runner = makeTheRunnerIdk(map_arena, PATH_MAP_ARRAY_SIZE);
 
-    runFile(STDIN_FILENO, &runner);
+    if(command_string) {
+        runString(command_string, &runner);
+    } else {
+        runFile(STDIN_FILENO, &runner);
+    }
 
     byeByeCommandRunner(&runner);
     free(map_arena);
+    cleanUpResources();
+
     return EXIT_SUCCESS;
 
-    cleanUpResources();
 
     #undef PATH_MAP_ARRAY_SIZE
 }

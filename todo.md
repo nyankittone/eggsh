@@ -1,5 +1,6 @@
 # TODO list
-* Create a common system for argument parsing, both for the main program and for builtin commands
+* Implement -c option
+* Add support for reading commands from a file
 * Create ways to unit test builtin commands
   * For programs like `pwd`, I'll need to create a mock filesystem that contains directories I can 
     cd into and test with
@@ -7,7 +8,6 @@
 * Implement the pwd and printf commands
 * Make the `cd` implementation properly POSIX-conforming
 * Implement a command for generating random numbers
-* Add support for reading commands from a file
 * Add parsing for single and double quotes, backslashes, and semicolons
 * Fix the performance problems of the hash map implementation (and other performance problems)
 * add the `type` command (will require refactor to do it right)
