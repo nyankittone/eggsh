@@ -28,8 +28,8 @@ static CommandSchema command_line = {
         {
             .id = ARG_ID_STRING,
             .short_options = "c",
-            .long_options = {"command", NULL},
-            
+            .long_options = {"string", NULL},
+
             .description = "Execute the text passed by the argument passed to this option",
             .parameters = {
                 {
@@ -101,9 +101,7 @@ int main(int argc, char *argv[]) {
         if(iteration.status == COMMAND_ITER_PARAMETER) switch(iteration.id) {
             case ARG_ID_STRING:
                 {
-                // TODO: Set flag for running code from arbitrary string
                 ConverterResult result = iteration.converters[0].converter(iteration.converters[0].convertee, &command_string);
-                fputs("did I die!\n", stderr);
 
                 if (!result.is_ok) {
                     // TODO: do some kinda error handling here. Likely this will be adding to
@@ -112,6 +110,8 @@ int main(int argc, char *argv[]) {
                     return 69;
                 }
 
+                iterator.remaining_argv++;
+                iterator.remaining_argc--;
                 break;
                 }
         }

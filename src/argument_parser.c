@@ -1,3 +1,4 @@
+#include "util.h"
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
@@ -33,10 +34,20 @@ void collectArgConverters (
     // I wonder if SIMD could make this faster. I genuinely don't know.
     u8f i = 0;
 
+    // We need to get the number of parameters the passed option has. If i in this loop equals or exceeds
+    // relative_argc, that means there's more parameters needed than there are arguments left to
+    // work through... meaning we need to emit an error.
+
     for(; memcmp(params + i, &NULL_OPTION_PARAMETER, sizeof(OptionParameter)); i++) {
+        if(i >= relative_argc) {panic(69, "Insufficient parameters for last option passed!");}
+
         dest[i].converter = params[i].type->converter;
         dest[i].convertee = relative_argv[i];
     }
+
+    // TODO: if i is greater than 0 by the end of the loop, we should emit something indication that
+    // back to the caller. This will allow us to ignore remaining options in a list of short options
+    // if one has parameters.
 
     dest[i] = (ConverterWithInput) {0};
 }
@@ -75,17 +86,13 @@ CommandIteration getShortOptionReturn(const CommandIterator *const iterator, con
     // NOTE: I will 100% have to make this into some kind of array for quick lookup.
     const CommandOption *current_option = iterator->command->options;
     for(; memcmp(current_option, &NULL_OPTION, sizeof(&current_option)); current_option++) { 
-        fputs("ayo we looping here\n", stderr);
         // iterate through individual option flags
         for (
             const char *known_flag = current_option->short_options;
             *known_flag;
             known_flag++
         ) {
-            fprintf(stderr, "guhhh k:%c t:%c\n", *known_flag, tested_flag);
-
             if(*known_flag == tested_flag) {
-                fputs("passed!?!?\n", stderr);
                 CommandIteration returned;
                 returned.status = COMMAND_ITER_PARAMETER;
                 returned.id = current_option->id;
@@ -93,16 +100,11 @@ CommandIteration getShortOptionReturn(const CommandIterator *const iterator, con
                     returned.converters, current_option->parameters, iterator->remaining_argc - 1,
                     iterator->remaining_argv + 1
                 );
-                fputs("nothing happened yet dfggbfdgbdf!?!?\n", stderr);
-                fprintf(stderr, "%s meow\n", returned.converters[0].convertee);
-                fputs("BRUH BRUH BRUH\n", stderr);
 
                 return returned;
             }
         }
     }
-
-    fputs("what\n", stderr);
 
     // If no match for a flag occurred, then return with none and set an error. TODO: add an error
     // data type to set and return.
@@ -180,7 +182,6 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator->remaining_argv++;
                     iterator->remaining_argc--;
                 }
-                fputs("NYAH!\n", stderr);
 
                 return maybe_returned;
 
@@ -206,6 +207,8 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator->remaining_argc = 0;
                     return FULL_CMD_ITER_DONE;
                 }
+
+                fputs("uwu~\n", stderr);
 
                 CommandIteration returned = getLongOptionReturn(iterator, *iterator->remaining_argv);
                 iterator->remaining_argv++;
