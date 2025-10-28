@@ -162,7 +162,6 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                 return mCmdIterSubcommand(subcommand_id);
             }
             case ARGPARSE_OPT_SHORT:
-                fputs("when you\n", stderr);
                 // Iterate through all options and their short options to find a matching char. This
                 // also could theoretically benefit from a hash map.
 
@@ -207,8 +206,6 @@ CommandIteration parseArgs(CommandIterator *const iterator) {
                     iterator->remaining_argc = 0;
                     return FULL_CMD_ITER_DONE;
                 }
-
-                fputs("uwu~\n", stderr);
 
                 CommandIteration returned = getLongOptionReturn(iterator, *iterator->remaining_argv);
                 iterator->remaining_argv++;

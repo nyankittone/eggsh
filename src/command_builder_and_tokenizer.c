@@ -89,7 +89,6 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         tokenizer->remaining++; \
         if(!(--tokenizer->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
 
-    // TODO: Consider adding a macro for incrimenting this tokenizer pointer.
     // scan through remaining segment of remaining byte-by-byte.
     if(!tokenizer->scanning_word) {
         while(true) {

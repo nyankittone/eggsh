@@ -49,19 +49,17 @@ static CommandSchema command_line = {
 // prompt that runs at the end of each command should not display. If we're reading from stdin and
 // stdin is an actual terminal, then we run in interactive mode.
 static void runString(char *const string, CommandRunner *const runner) {
-    puts("what");
+    const size_t string_length = strlen(string); // This is a little hacky, but I don't care rn, I'm
+                                                 // tired.
+    string[string_length] = '\n';
 
     Tokenizer tokenizer = newTokenizer();
-    setTokenizerInput(&tokenizer, string, strlen(string));
+    setTokenizerInput(&tokenizer, string, string_length + 1);
 
     while(true) {
         TokenizeCommandReturn result = tokenizeBuilderInput(&tokenizer);
         if(result & (PARSE_COMMAND_HIT_NEWLINE)) {
             TokenIterator token_iterator = getTokenIterator(&tokenizer);
-
-            for(int i = 0; i < token_iterator.tokens_remaining; i++) {
-                printf("%s$\n", token_iterator.token_ptr + i);
-            }
 
             executeCommand(runner, &token_iterator);
             newCommand(&tokenizer);
