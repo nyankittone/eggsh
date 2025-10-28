@@ -83,6 +83,19 @@ static bool runCommandFromFile (
 ) {
     ssize_t buffer_length;
 
+    TokenizeCommandReturn result = tokenizeBuilderInput(tokenizer);
+    if((result & PARSE_COMMAND_HIT_NEWLINE)) {
+        TokenIterator token_iterator = getTokenIterator(tokenizer);
+        executeCommand(runner, &token_iterator);
+        newCommand(tokenizer);
+
+        return false;
+    }
+
+    // This is just a placeholder until proper handling of this case pops up. At the moment, this
+    // being false is probably a bug or something, idk.
+    assert((result & PARSE_COMMAND_OUT_OF_DATA) == true);
+
     buffer_length = read(file_descriptor, buffer, buffer_size);
     if(!buffer_length) return true; // A buffer length of zero means we hit EOF
 
@@ -92,7 +105,7 @@ static bool runCommandFromFile (
     // process it
     // do this in a loop until we get a signal saying we hit a newline
     while(true) {
-        TokenizeCommandReturn result = tokenizeBuilderInput(tokenizer);
+        result = tokenizeBuilderInput(tokenizer);
         if(result & PARSE_COMMAND_HIT_NEWLINE) {
             break;
         }
