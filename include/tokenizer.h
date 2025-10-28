@@ -84,7 +84,6 @@ typedef u8 TokenizeCommandReturn;
 // stream it's getting stuff from, unless PARSE_COMMAND_COMMAND_STOP is also returned.
 #define PARSE_COMMAND_OUT_OF_DATA (1)
 
-//
 #define PARSE_COMMAND_HIT_NEWLINE (2)
 #define PARSE_COMMAND_COMMAND_STOP (4)
 
