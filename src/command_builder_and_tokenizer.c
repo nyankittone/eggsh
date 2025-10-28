@@ -122,7 +122,6 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
 
                     continue;
                 case '\n':
-                    // Add logic to add characters here
                     addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
                     newToken(tokenizer);
                     returned |= PARSE_COMMAND_HIT_NEWLINE;

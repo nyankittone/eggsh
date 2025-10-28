@@ -48,13 +48,15 @@ typedef struct {
 
     char *lagged_remaining;
     char *remaining;
-    size_t remaining_length;
+    size_t remaining_length; // This is used to refer to how many bytes we have left before the
+                             // caller of the tokenizer needs to fetch it more data or quit.
 
     bool scanning_word;
 } Tokenizer;
 
 // Function for creating a new Tokenizer object. This function will cause the program to stop
-// if allocating memory for it behind the scenes fails.
+// if allocating memory for it behind the scenes fails. This function is not to be confused with
+// `newCommand`, which resets an existing tokenizer to prepare it for a new line of text.
 Tokenizer newTokenizer(void);
 
 // This function frees the underlying memory arena allocated for `builder`, and sets all values
@@ -76,8 +78,15 @@ Tokenizer *newCommand(Tokenizer *const tokenizer);
 
 typedef u8 TokenizeCommandReturn;
 #define PARSE_COMMAND_NORMAL (0)
+
+// This bit value is returned by `tokenizeBuilderInput` when the tokenizer runs out of bytes to read
+// from. This indicates that the caller of that function should load more bytes of data from the
+// stream it's getting stuff from, unless PARSE_COMMAND_COMMAND_STOP is also returned.
 #define PARSE_COMMAND_OUT_OF_DATA (1)
+
+//
 #define PARSE_COMMAND_HIT_NEWLINE (2)
+#define PARSE_COMMAND_COMMAND_STOP (4)
 
 TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer);
 

@@ -120,7 +120,7 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
             sizeof(char**) * runner->command_line_capacity
         );
     }
-    
+
     // get the first token from the iterator
     char *const first_token = nextToken(iterator);
     if(!first_token) {
@@ -149,6 +149,9 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
     char *const base_directory = getFromMap(&runner->path_map, runner->command_line_buffer[0]);
     if(!base_directory) return actuallySpawnCommand(runner->command_line_buffer[0], runner->command_line_buffer);
 
+    // TODO: Concatinating the string for the path for the executable is possibly a bottleneck in
+    // scripts. Benchmark this later to see if you should instead have the paths pre-concatinated in
+    // the map.
     char full_path[strlen(base_directory) + strlen(runner->command_line_buffer[0]) + 2];
     sprintf(full_path, "%s/%s", base_directory, runner->command_line_buffer[0]);
     return actuallySpawnCommand(full_path, runner->command_line_buffer);
