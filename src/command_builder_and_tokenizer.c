@@ -183,6 +183,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
 TokenIterator getTokenIterator(Tokenizer *const tokenizer) {
     assert(tokenizer != NULL);
 
+
     return (TokenIterator) {
         .token_ptr = tokenizer->tokens.ptr,
         .tokens_remaining = tokenizer->total_tokens,
@@ -218,6 +219,7 @@ Tokenizer *newCommand(Tokenizer *const tokenizer) {
     // off.
     tokenizer->total_tokens = 0;
     tokenizer->tokens.bytes_written = 0;
+    tokenizer->scanning_word = false;
 
     return tokenizer;
 }

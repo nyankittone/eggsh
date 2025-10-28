@@ -110,7 +110,6 @@ static ExitStatus actuallySpawnCommand(const char *const program_path, char **co
 // TODO: Make this not return stuff, but rather mutate some state for the exit code and whatnot
 ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iterator) {
     assert(runner != NULL && iterator != NULL);
-    printf("tokens: %d\n", iterator->tokens_remaining);
 
     // I may need to re-locate this re-allocating logic if I end up making this underlying array
     // part of another allocated region... meowww
@@ -125,7 +124,6 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
     // get the first token from the iterator
     char *const first_token = nextToken(iterator);
     if(!first_token) {
-        fputs("No command was run!\n", stderr);
         return NO_EXIT_STATUS;
     }
 
