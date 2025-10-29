@@ -152,6 +152,8 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
 int main(int argc, char *argv[]) {
     #define PATH_MAP_ARRAY_SIZE (8192)
 
+    printf("%s, version %s\n", PROGRAM_NAME, VERSION_STRING);
+
     char *command_string = NULL;
 
     // parse command line parameters here
@@ -194,7 +196,6 @@ int main(int argc, char *argv[]) {
     // It's weird how we're checking this parameter after initializing our memory chunks and
     // whatnot... eeeeh
     if(iterator.positional_argc > 0) {
-        errno = 0;
         const int file = open(iterator.positional_argv[0], O_RDONLY, 0);
         if(file == -1) {
             perror("Failed to open provided path");
@@ -203,6 +204,11 @@ int main(int argc, char *argv[]) {
 
         runFile(file, &runner);
 
+        if(close(file) == -1) {
+            perror("Failed to close opened file"); // We're not returning early as there's no need;
+                                                   // we're  shutting down the program by this point
+                                                   // anyway.
+        }
     } else {
         runFile(STDIN_FILENO, &runner);
     }

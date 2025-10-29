@@ -1,3 +1,5 @@
+include version_config.mk
+
 release_flags := -O3 -DNDEBUG
 debug_flags := -Og -g -ggdb
 test_flags := -lcheck -DRUN_TESTS $(debug_flags)
@@ -24,7 +26,7 @@ test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) 
 debug_objects := $(patsubst $(source_dir)/%.c,$(debug_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(debug_object_dir)/builtin_%.o,$(builtins_sources))
 
 CC := cc
-CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src
+CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src -DPROGRAM_NAME=\"$(self_reporting_name)\" -DVERSION_STRING=\"$(program_version)\"
 
 .PHONY: all clean release debug
 
