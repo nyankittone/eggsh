@@ -25,6 +25,10 @@ objects := $(patsubst $(source_dir)/%.c,$(normal_object_dir)/%.o,$(sources)) $(p
 test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(test_object_dir)/builtin_%.o,$(builtins_sources)) $(patsubst $(tests_source_dir)/%.c,$(test_object_dir)/tests_%.o,$(tests_sources))
 debug_objects := $(patsubst $(source_dir)/%.c,$(debug_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(debug_object_dir)/builtin_%.o,$(builtins_sources))
 
+ifeq "$(prerelease)" "true"
+	program_version := $(program_version)-pre-$(shell git rev-parse --short HEAD)
+endif
+
 CC := cc
 CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src -DPROGRAM_NAME=\"$(self_reporting_name)\" -DVERSION_STRING=\"$(program_version)\"
 

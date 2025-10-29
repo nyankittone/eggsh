@@ -139,6 +139,7 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
     // I may have to add an extra check to ensure if the file descriptor is stdin.
     if(isatty(file_descriptor)) {
         printVersionInfo(stderr);
+
         do {
             fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
         } while(!runCommandFromFile(runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE));
