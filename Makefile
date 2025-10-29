@@ -26,7 +26,7 @@ test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) 
 debug_objects := $(patsubst $(source_dir)/%.c,$(debug_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(debug_object_dir)/builtin_%.o,$(builtins_sources))
 
 ifeq "$(prerelease)" "true"
-	program_version := $(program_version)-pre-$(shell git rev-parse --short HEAD)
+	program_version := $(program_version)-pre-$(shell cat **/*.c cat **/*.h | sha1sum | cut -c -12)
 endif
 
 CC := cc
