@@ -11,6 +11,7 @@
 #include <resource_shortcut.h>
 #include <argument_parser.h>
 #include <shell_types.h>
+#include <misc.h>
 
 enum {
     ARG_ID_EGGSH,
@@ -137,6 +138,7 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
 
     // I may have to add an extra check to ensure if the file descriptor is stdin.
     if(isatty(file_descriptor)) {
+        printVersionInfo(stderr);
         do {
             fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
         } while(!runCommandFromFile(runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE));
@@ -151,8 +153,6 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
 
 int main(int argc, char *argv[]) {
     #define PATH_MAP_ARRAY_SIZE (8192)
-
-    printf("%s, version %s\n", PROGRAM_NAME, VERSION_STRING);
 
     char *command_string = NULL;
 
