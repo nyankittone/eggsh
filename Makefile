@@ -96,14 +96,14 @@ $(test_object_dir):
 $(gperf_filename).c: $(gperf_filename).gperf
 	gperf $< > $@
 
-build_globals.o: build_globals.c
+build_globals.o: build_globals.c main.c $(sources) $(builtins_sources)
 	if [ "$(prerelease)" = true ]; then \
 		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)"; \
 	fi && \
 	$(CC) $(CFLAGS) $(release_flags) $(version_conf_pass_flags) \
 	-DPROGRAM_NAME=$(self_reporting_name) -DVERSION_STRING='"'$$new_version_string'"' -c $< -o $@
 
-build_globals$(debug_suffix).o: build_globals.c
+build_globals$(debug_suffix).o: build_globals.c main.c $(sources) $(builtins_sources)
 	if [ "$(prerelease)" = true ]; then \
 		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)"; \
 	fi && \
