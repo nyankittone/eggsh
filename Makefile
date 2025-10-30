@@ -26,7 +26,8 @@ test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) 
 debug_objects := $(patsubst $(source_dir)/%.c,$(debug_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(debug_object_dir)/builtin_%.o,$(builtins_sources))
 
 ifeq "$(prerelease)" "true"
-	program_version := $(program_version)-pre-$(shell cat **/*.c cat **/*.h | sha1sum | cut -c -12)
+	# TODO: shell command here has bashisms in it. Make this m,ore portable.
+	program_version := $(program_version)-pre-$(shell find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)
 endif
 
 CC := cc
