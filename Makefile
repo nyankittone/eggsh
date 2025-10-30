@@ -100,6 +100,8 @@ $(gperf_filename).c: $(gperf_filename).gperf
 build_globals.o: build_globals.c $(all_source_files)
 	if [ "$(prerelease)" = true ]; then \
 		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha256sum | cut -c -12)"; \
+	else \
+		new_version_string=$(program_version); \
 	fi && \
 	$(CC) $(CFLAGS) $(release_flags) $(version_conf_pass_flags) \
 	-DPROGRAM_NAME=$(self_reporting_name) -DVERSION_STRING='"'$$new_version_string'"' -c $< -o $@
