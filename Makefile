@@ -4,6 +4,10 @@ release_flags := -O3 -DNDEBUG
 debug_flags := -Og -g -ggdb
 test_flags := -lcheck -DRUN_TESTS $(debug_flags)
 
+self_reporting_name := \"$(self_reporting_name)\"
+
+debug_suffix := -dbg
+
 program_name := eggsh
 debug_program_name := eggsh-dbg
 source_dir := src
@@ -25,13 +29,13 @@ objects := $(patsubst $(source_dir)/%.c,$(normal_object_dir)/%.o,$(sources)) $(p
 test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(test_object_dir)/builtin_%.o,$(builtins_sources)) $(patsubst $(tests_source_dir)/%.c,$(test_object_dir)/tests_%.o,$(tests_sources))
 debug_objects := $(patsubst $(source_dir)/%.c,$(debug_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(debug_object_dir)/builtin_%.o,$(builtins_sources))
 
-ifeq "$(prerelease)" "true"
-	# TODO: shell command here has bashisms in it. Make this m,ore portable.
-	program_version := $(program_version)-pre-$(shell find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)
-endif
+# ifeq "$(prerelease)" "true"
+# 	# TODO: shell command here has bashisms in it. Make this m,ore portable.
+# 	program_version := $(program_version)-pre-$(shell find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)
+# endif
 
 CC := cc
-CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src -DPROGRAM_NAME=\"$(self_reporting_name)\" -DVERSION_STRING=\"$(program_version)\"
+CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src
 
 .PHONY: all clean release debug
 
@@ -41,13 +45,13 @@ release: $(program_name)
 
 debug: $(debug_program_name)
 
-$(program_name): $(objects) $(program_name).o
+$(program_name): $(objects) $(program_name).o build_globals.o
 	$(CC) $^ $(CFLAGS) $(release_flags) -o $@
 
 $(program_name).o: main.c
 	$(CC) -c $< $(CFLAGS) $(release_flags) -o $@
 
-$(debug_program_name): $(debug_objects) $(debug_program_name).o
+$(debug_program_name): $(debug_objects) $(debug_program_name).o build_globals$(debug_suffix).o
 	$(CC) $^ $(CFLAGS) $(debug_flags) -o $@
 
 $(debug_program_name).o: main.c
@@ -91,6 +95,20 @@ $(test_object_dir):
 
 $(gperf_filename).c: $(gperf_filename).gperf
 	gperf $< > $@
+
+build_globals.o: build_globals.c
+	if [ "$(prerelease)" = true ]; then \
+		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)"; \
+	fi && \
+	$(CC) $(CFLAGS) $(release_flags) $(version_conf_pass_flags) \
+	-DPROGRAM_NAME=$(self_reporting_name) -DVERSION_STRING='"'$$new_version_string'"' -c $< -o $@
+
+build_globals$(debug_suffix).o: build_globals.c
+	if [ "$(prerelease)" = true ]; then \
+		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)"; \
+	fi && \
+	$(CC) $(CFLAGS) $(debug_flags) $(version_conf_pass_flags) \
+	-DPROGRAM_NAME=$(self_reporting_name) -DVERSION_STRING='"'$$new_version_string'"' -c $< -o $@
 
 clean:
 	rm -rf *.o $(object_dir) $(gperf_filename).c $(program_name) tests result $(debug_program_name)
