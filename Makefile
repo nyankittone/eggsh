@@ -11,6 +11,7 @@ debug_suffix := -dbg
 program_name := eggsh
 debug_program_name := eggsh-dbg
 source_dir := src
+include_dir := include
 builtins_source_dir := builtins_src
 tests_source_dir := tests_src
 
@@ -25,14 +26,14 @@ sources := $(wildcard $(source_dir)/*.c)
 builtins_sources := $(wildcard $(builtins_source_dir)/*.c) $(gperf_filename).c
 tests_sources := $(wildcard $(tests_source_dir)/*.c)
 
+# TODO: Implement a recursive wildcard function so we can properly recursively get all header files
+# in the project.
+all_source_files := main.c $(sources) $(wildcard $(builtins_source_dir)/*.c) $(wildcard $(include_dir)/*.h) $(wildcard $(include_dir)/*/*.h) $(wildcard $(builtins_source_dir)/*.h)
+all_source_files := $(filter-out $(gperf_filename).c,$(all_source_files))
+
 objects := $(patsubst $(source_dir)/%.c,$(normal_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(normal_object_dir)/builtin_%.o,$(builtins_sources))
 test_objects := $(patsubst $(source_dir)/%.c,$(test_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(test_object_dir)/builtin_%.o,$(builtins_sources)) $(patsubst $(tests_source_dir)/%.c,$(test_object_dir)/tests_%.o,$(tests_sources))
 debug_objects := $(patsubst $(source_dir)/%.c,$(debug_object_dir)/%.o,$(sources)) $(patsubst $(builtins_source_dir)/%.c,$(debug_object_dir)/builtin_%.o,$(builtins_sources))
-
-# ifeq "$(prerelease)" "true"
-# 	# TODO: shell command here has bashisms in it. Make this m,ore portable.
-# 	program_version := $(program_version)-pre-$(shell find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)
-# endif
 
 CC := cc
 CFLAGS := -std=c99 -lc -pedantic-errors -Wall -Iinclude -Ibuiltins_src
@@ -96,16 +97,16 @@ $(test_object_dir):
 $(gperf_filename).c: $(gperf_filename).gperf
 	gperf $< > $@
 
-build_globals.o: build_globals.c main.c $(sources) $(builtins_sources)
+build_globals.o: build_globals.c $(all_source_files)
 	if [ "$(prerelease)" = true ]; then \
-		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)"; \
+		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha256sum | cut -c -12)"; \
 	fi && \
 	$(CC) $(CFLAGS) $(release_flags) $(version_conf_pass_flags) \
 	-DPROGRAM_NAME=$(self_reporting_name) -DVERSION_STRING='"'$$new_version_string'"' -c $< -o $@
 
-build_globals$(debug_suffix).o: build_globals.c main.c $(sources) $(builtins_sources)
+build_globals$(debug_suffix).o: build_globals.c $(all_source_files)
 	if [ "$(prerelease)" = true ]; then \
-		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha1sum | cut -c -12)"; \
+		new_version_string=$(program_version)-pre-"$$(find -type f -name '*.[ch]' ! -name 'builtins_map.c' | xargs cat | sha256sum | cut -c -12)"; \
 	fi && \
 	$(CC) $(CFLAGS) $(debug_flags) $(version_conf_pass_flags) \
 	-DPROGRAM_NAME=$(self_reporting_name) -DVERSION_STRING='"'$$new_version_string'"' -c $< -o $@
