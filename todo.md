@@ -1,14 +1,30 @@
-# TODO list
-* Implement -c option
-* Add support for reading commands from a file
-* Create ways to unit test builtin commands
+# TODO list and Eggsh roadmap
+
+## 0.0.3
+The major goal of this release is to get eggsh into the minimal viable state needed for making it my
+default shell, so I can dog-food it.
+* Better commenting inside the existing codebase (I could release this as 0.0.2.1)
+* Add parsing for single and double quotes, backslashes, and semicolons
+* Add proper handling of signals such as SIGINT so that, for example, the shell doesn't close when
+  pressing Ctrl-C
+* Fix a couple random bugs that I feel like fixing
+
+## 0.0.4
+This release should focus on making the argument parser used in the main function and internal
+commands more robust and complete, and implement a few internal commands using it.
+* Add the `CompoundError` data structure, used mainly for creating and displaying errors in eggsh
+  regarding argument parsing
+  * We will also need to make the argument parser actually use this data structure.
+* Clean up the code needed in a command's "main" function to make it more pleasing to write
+* Implement the `printf` command
+* Implement a command for generating random numbers
+
+## Later versions
+* Create more ways to unit test builtin commands
   * For programs like `pwd`, I'll need to create a mock filesystem that contains directories I can 
     cd into and test with
     * This would include symbolic links so I can ensure `pwd -P` vs `pwd -L` work as intended
-* Implement the pwd and printf commands
 * Make the `cd` implementation properly POSIX-conforming
-* Implement a command for generating random numbers
-* Add parsing for single and double quotes, backslashes, and semicolons
 * Fix the performance problems of the hash map implementation (and other performance problems)
 * add the `type` command (will require refactor to do it right)
 * Make the cached file names in PATH more dynamic
