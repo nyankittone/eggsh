@@ -84,7 +84,14 @@ typedef u8 TokenizeCommandReturn;
 // stream it's getting stuff from, unless PARSE_COMMAND_COMMAND_STOP is also returned.
 #define PARSE_COMMAND_OUT_OF_DATA (1)
 
+// This bit value is raised when the parser hits a new line. This does not necessarily mean that a
+// new command must be executed, since a command can be made up of multiple lines, but this is a
+// needed bit, since when running interactively, we'll need to get the user's input for each line.
 #define PARSE_COMMAND_HIT_NEWLINE (2)
+
+// This biut value is the one used to indicate when a whole command is done being processed, and we
+// can now try to run it. A TokenIterator object is needed to be used to get the tokens out of the
+// tokenizer by this point.
 #define PARSE_COMMAND_COMMAND_STOP (4)
 
 TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer);
