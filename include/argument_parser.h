@@ -4,9 +4,18 @@
 #include <rusttypes.h>
 #include <util.h>
 
+// How many subcommands are allowed per command?
 #define COMMAND_NODES_PER_NODE (16)
-#define COMMAND_NAME_MAX (32)
+
+// Macro for the maximum possible length for a command or subcommand in bytes, including the null
+// byte.
+#define COMMAND_NAME_MAX (32) 
+
+// Maximum number of parameters allowed per command option, plus one, to account for a null value.
 #define COMMAND_OPTION_PARAMETER_LIMIT (5)
+
+// How many options are allowed per command, accounting for a null value at the end?
+#define COMMAND_OPTION_COUNT_MAX (32)
 
 // This is a header outlining an argument parser for this codebase.
 // This parser has a few goals:
@@ -76,10 +85,10 @@ typedef struct CommandSchema {
     // TODO: Add limits on how many options and subcommands there can be by making these pointers
     // into arrays. That might be faster.
 
-    u8f options_count;
-    CommandOption options[32]; // List of all supported flags for this command
+    CommandOption options[COMMAND_OPTION_COUNT_MAX]; // List of all supported flags for this command
 
-    u8f subcommand_count;
+    u8f subcommand_count; // The subcommand array is the only one in the command schema that is not
+                          // null-value terminated.
     struct CommandSchema *subcommands; // list of all subcommands for this command
 } CommandSchema;
 
@@ -98,7 +107,7 @@ typedef struct {
 // idk fully what I'm cooking here with this data type...
 typedef struct {
     enum {
-        COMMAND_ITER_NONE, // I genuinely forgot what the NONE option does over DONE...
+        COMMAND_ITER_NONE, // TODO: Remove this enumeration in the future. It's pretty much useless.
         COMMAND_ITER_DONE,
         COMMAND_ITER_PARAMETER,
     } status;
@@ -106,8 +115,12 @@ typedef struct {
     ConverterWithInput converters[COMMAND_OPTION_PARAMETER_LIMIT]; // the first index should be NULL on a subcommand
 } CommandIteration;
 
+// Macro the expands out to a `CommandIteration` struct indicating we're done going through options.
 #define FULL_CMD_ITER_DONE ((CommandIteration) {.status = COMMAND_ITER_DONE})
+
 #define mCmdIterSubcommand(the_id) ((CommandIteration) {.status = COMMAND_ITER_PARAMETER, .id = (the_id)})
+
+// I don't like how this macro exists in my code lmao
 #define FULL_CMD_ITER_NONE ((CommandIteration) {.status = COMMAND_ITER_NONE})
 #define NO_OPTION_ID ((int) -1)
 
