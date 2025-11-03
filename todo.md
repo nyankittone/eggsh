@@ -3,7 +3,6 @@
 ## 0.0.3
 The major goal of this release is to get eggsh into the minimal viable state needed for making it my
 default shell, so I can dog-food it.
-* Better commenting inside the existing codebase (I could release this as 0.0.2.1)
 * Add parsing for single and double quotes, backslashes, and semicolons
 * Add proper handling of signals such as SIGINT so that, for example, the shell doesn't close when
   pressing Ctrl-C
