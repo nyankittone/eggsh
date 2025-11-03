@@ -51,7 +51,9 @@ typedef struct {
     size_t remaining_length; // This is used to refer to how many bytes we have left before the
                              // caller of the tokenizer needs to fetch it more data or quit.
 
-    bool scanning_word;
+    bool scanning_word; // Internal flag used by the tokenizer to see if we're in the middle of
+                        // a word right now or not. Keeping this state is important so that it can
+                        // persist between many calls to `tokenizeBuilderInput`.
 } Tokenizer;
 
 // Function for creating a new Tokenizer object. This function will cause the program to stop
@@ -76,7 +78,11 @@ Tokenizer *setTokenizerInput(Tokenizer *tokenizer, char *string, size_t length);
 // its original size.
 Tokenizer *newCommand(Tokenizer *const tokenizer);
 
+// This data type is returned by the `tokenizeBuilderInput` function, and acts as a status code for
+// the function on why it stopped running. Each bit in the code represents certain conditions, i.e.
+// if a newline was hit, or we run out of bytes in the buffer provided by the parser.
 typedef u8 TokenizeCommandReturn;
+
 #define PARSE_COMMAND_NORMAL (0)
 
 // This bit value is returned by `tokenizeBuilderInput` when the tokenizer runs out of bytes to read
@@ -89,20 +95,41 @@ typedef u8 TokenizeCommandReturn;
 // needed bit, since when running interactively, we'll need to get the user's input for each line.
 #define PARSE_COMMAND_HIT_NEWLINE (2)
 
-// This biut value is the one used to indicate when a whole command is done being processed, and we
+// This bit value is the one used to indicate when a whole command is done being processed, and we
 // can now try to run it. A TokenIterator object is needed to be used to get the tokens out of the
 // tokenizer by this point.
 #define PARSE_COMMAND_COMMAND_STOP (4)
 
+// This function makes the tokenizer object actually try to get some tokens out of the current
+// buffer that the tokenizer is set to use. The actual strings for the tokens are stored inside its
+// own little data structure that, once ready, can be revealed using the `TokenIterator` object.
+// This function will return a code that indicates a variety of things, such as if it;s run through
+// the buffer it was provided and needs more data, it's finished parsing through a command and needs
+// something to execute it, if it's hit a newline character and needs the caller to give it another
+// line of input, and so on. Code that calls this function will need to properly handle the values
+// that can be returned from it for whatever the caller is trying to do; look at the
+// `PARSE_COMMAND_{xyz}` macros to see the bits that can be returned.
 TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer);
 
+// To actually use the data tokenized by the tokenizer, we have this data structure defined for
+// getting the tokens one-by-one. Each iteration of this iterator returns the pointer to the next
+// token that was found, and this continues until it runs out of tokens.
+// This data structure's exact purpose is likely to change in the future as this tokenizer grows
+// into being a full-blown parser. I may instead need an iterator of sorts for iterating through an
+// AST.
 typedef struct {
     u32 tokens_remaining;
     char *token_ptr;
 } TokenIterator;
 
+// Function for spawning a new `TokenIterator` for a specified tokenizer.
 TokenIterator getTokenIterator(Tokenizer *const tokenizer);
+
+// Function for getting just one token out of a `TokenIterator`.
 char *nextToken(TokenIterator *const iterator);
+
+// This function loops over a `TokenIterator` passed in, and puts the pointers to the tokens for it
+// into a buffer for an array specified.
 char **pasteRemainingTokens(TokenIterator *const iterator, char **destination);
 
 #ifdef RUN_TESTS
