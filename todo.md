@@ -7,6 +7,7 @@ default shell, so I can dog-food it.
 * Add proper handling of signals such as SIGINT so that, for example, the shell doesn't close when
   pressing Ctrl-C
 * Fix a couple random bugs that I feel like fixing
+* Consider implementing OSC escape codes into my shelll (I recently discovered what those do lol)
 
 ## 0.0.4
 This release should focus on making the argument parser used in the main function and internal
