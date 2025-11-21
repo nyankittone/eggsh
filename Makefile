@@ -58,7 +58,7 @@ $(debug_program_name): $(debug_objects) $(debug_program_name).o build_globals$(d
 $(debug_program_name).o: main.c
 	$(CC) -c $< $(CFLAGS) $(debug_flags) -o $@
 
-tests: $(test_objects) tests.o
+tests: $(test_objects) tests.o build_globals.o
 	$(CC) $^ $(CFLAGS) $(test_flags) -o $@
 
 tests.o: tests.c
