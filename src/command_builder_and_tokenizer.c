@@ -79,15 +79,69 @@ Tokenizer *setTokenizerInput(Tokenizer *tokenizer, char *string, size_t length) 
     return tokenizer;
 }
 
+#define INCRIMENT_REMAINING \
+    tokenizer->remaining++; \
+    if(!(--tokenizer->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
+
+static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
+    TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
+
+    // Scan through until we hit a newline, buffer end, or another single quote.
+    // We will need to add stuff for handling when a command spans multiple lines after this.
+    while(true) {
+        switch(*tokenizer->remaining) {
+            case '\0':
+                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                INCRIMENT_REMAINING
+                tokenizer->lagged_remaining = tokenizer->remaining;
+
+                continue;
+            case '\n':
+                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                newToken(tokenizer); // TODO: remove this line
+                returned |= PARSE_COMMAND_HIT_NEWLINE;
+                INCRIMENT_REMAINING
+                tokenizer->lagged_remaining = tokenizer->remaining;
+
+                return returned;
+            case '\'':
+                tokenizer->inside_single_quotes = false;
+
+                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                INCRIMENT_REMAINING
+                tokenizer->lagged_remaining = tokenizer->remaining;
+
+                return PARSE_COMMAND_NORMAL;
+        }
+
+        // moving to the next character as long as we aren't on whitespace.
+        if(*tokenizer->remaining != ' ' && *tokenizer->remaining != '\t') {
+            // Add GOOD logic to add characters here
+            // ^ "what the fuck does the above comment mean?" - me, 4 months after writing that
+
+            // INCRIMENT_REMAINING macro couldn't be used here, since here we need to add token
+            // data before returning.
+            tokenizer->remaining++;
+            if(!(--tokenizer->remaining_length)) {
+                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                return returned | PARSE_COMMAND_OUT_OF_DATA;
+            }
+
+            continue;
+        }
+
+        break;
+    }
+
+    return returned;
+}
+
 TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
     assert(tokenizer != NULL);
     if(tokenizer->remaining_length == 0) return PARSE_COMMAND_OUT_OF_DATA;
 
     TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
 
-    #define INCRIMENT_REMAINING \
-        tokenizer->remaining++; \
-        if(!(--tokenizer->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
 
     // scan through remaining segment of tokenizer->remaining byte-by-byte.
 
@@ -140,7 +194,11 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
                 case '\'':
-                    // blah blah blah
+                    // call a function for handling single quotes
+                    // return whatever status was returned by that function unless it's
+                    // PARSE_COMMAND_NORMAL
+                    tokenizer->inside_single_quotes = true;
+
                     break;
             }
 
@@ -195,8 +253,9 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
 
     return PARSE_COMMAND_NORMAL;
 
-    #undef INCRIMENT_REMAINING
 }
+
+#undef INCRIMENT_REMAINING
 
 TokenIterator getTokenIterator(Tokenizer *const tokenizer) {
     assert(tokenizer != NULL);

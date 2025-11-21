@@ -54,6 +54,7 @@ typedef struct {
     bool scanning_word; // Internal flag used by the tokenizer to see if we're in the middle of
                         // a word right now or not. Keeping this state is important so that it can
                         // persist between many calls to `tokenizeBuilderInput`.
+    bool inside_single_quotes;
 } Tokenizer;
 
 // Function for creating a new Tokenizer object. This function will cause the program to stop
