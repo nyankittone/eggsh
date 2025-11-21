@@ -393,6 +393,50 @@ START_TEST(token_test_iterator_filling) {
     ck_assert_ptr_null(result[11]);
 } END_TEST
 
+START_TEST(token_test_single_quote) {
+    static char input[] = "Hello, 'world!'\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hello,");
+    ck_assert_str_eq(result[1], "world!");
+    ck_assert_ptr_null(result[2]);
+} END_TEST
+
+START_TEST(token_test_single_quote_spam) {
+    static char input[] = "Hello, 'w''orld!' ha'h'a'ha'\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hello,");
+    ck_assert_str_eq(result[1], "world!");
+    ck_assert_str_eq(result[2], "hahaha");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
+START_TEST(token_test_single_quote_spam_harder) {
+    static char input[] = "He''''''''''llo, world! hahaha\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hello,");
+    ck_assert_str_eq(result[1], "world!");
+    ck_assert_str_eq(result[2], "hahaha");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -410,6 +454,9 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_leading_whitespace);
     tcase_add_test(test_case_core, token_test_iterator);
     tcase_add_test(test_case_core, token_test_iterator_filling);
+    tcase_add_test(test_case_core, token_test_single_quote);
+    tcase_add_test(test_case_core, token_test_single_quote_spam);
+    tcase_add_test(test_case_core, token_test_single_quote_spam_harder);
 
     suite_add_tcase(returned, test_case_core);
 
