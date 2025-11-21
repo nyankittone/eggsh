@@ -437,6 +437,21 @@ START_TEST(token_test_single_quote_spam_harder) {
     ck_assert_ptr_null(result[3]);
 } END_TEST
 
+START_TEST(token_test_single_quote_empty_parameter) {
+    static char input[] = "Hi '' there!\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hi");
+    ck_assert_str_eq(result[1], "");
+    ck_assert_str_eq(result[2], "there!");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -457,6 +472,7 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_single_quote);
     tcase_add_test(test_case_core, token_test_single_quote_spam);
     tcase_add_test(test_case_core, token_test_single_quote_spam_harder);
+    tcase_add_test(test_case_core, token_test_single_quote_empty_parameter);
 
     suite_add_tcase(returned, test_case_core);
 
