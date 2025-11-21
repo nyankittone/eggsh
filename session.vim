@@ -13,15 +13,24 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +8 main.c
-badd +1 term://~/Programming/Eggsh//253233:/usr/bin/bash
-badd +7 todo.md
-badd +1 Makefile
-badd +1 src/command_builder_and_tokenizer.c
-badd +1 include/tokenizer.h
-badd +0 version_config.mk
+badd +50 main.c
+badd +1637 term://~/Programming/Eggsh//253233:/usr/bin/bash
+badd +6 todo.md
+badd +63 Makefile
+badd +215 src/command_builder_and_tokenizer.c
+badd +57 include/tokenizer.h
+badd +4 version_config.mk
 badd +251 man://git-branch(1)
 badd +29 man://git-reset(1)
+badd +26 term://~/Programming/Eggsh//346078:/usr/bin/bash
+badd +4 ~/.config/emoji
+badd +39 term://~/Programming/Eggsh//346154:/usr/bin/bash
+badd +1 ~/.config/clangd/config.yaml
+badd +27 term://~/.config/clangd//347740:/usr/bin/bash
+badd +3 /tmp/idc.c
+badd +5 .clang
+badd +0 .gitignore_hidden_message
+badd +5 .clangd
 argglobal
 %argdel
 $argadd main.c
@@ -38,10 +47,7 @@ vsplit
 wincmd w
 wincmd _ | wincmd |
 split
-wincmd _ | wincmd |
-split
-2wincmd k
-wincmd w
+1wincmd k
 wincmd w
 let &splitbelow = s:save_splitbelow
 let &splitright = s:save_splitright
@@ -53,12 +59,10 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
-exe '2resize ' . ((&lines * 17 + 28) / 56)
+exe '2resize ' . ((&lines * 36 + 28) / 56)
 exe 'vert 2resize ' . ((&columns * 118 + 119) / 238)
-exe '3resize ' . ((&lines * 17 + 28) / 56)
+exe '3resize ' . ((&lines * 16 + 28) / 56)
 exe 'vert 3resize ' . ((&columns * 118 + 119) / 238)
-exe '4resize ' . ((&lines * 17 + 28) / 56)
-exe 'vert 4resize ' . ((&columns * 118 + 119) / 238)
 argglobal
 setlocal foldmethod=manual
 setlocal foldexpr=0
@@ -70,19 +74,19 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 8 - ((7 * winheight(0) + 26) / 53)
+let s:l = 50 - ((33 * winheight(0) + 26) / 53)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 8
+keepjumps 50
 normal! 0
 wincmd w
 argglobal
-if bufexists(fnamemodify("todo.md", ":p")) | buffer todo.md | else | edit todo.md | endif
+if bufexists(fnamemodify("Makefile", ":p")) | buffer Makefile | else | edit Makefile | endif
 if &buftype ==# 'terminal'
-  silent file todo.md
+  silent file Makefile
 endif
-balt term://~/Programming/Eggsh//253233:/usr/bin/bash
+balt version_config.mk
 setlocal foldmethod=manual
 setlocal foldexpr=0
 setlocal foldmarker={{{,}}}
@@ -93,36 +97,12 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 13 - ((8 * winheight(0) + 8) / 17)
+let s:l = 120 - ((33 * winheight(0) + 18) / 36)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 13
-normal! 029|
-lcd ~/Programming/Eggsh
-wincmd w
-argglobal
-if bufexists(fnamemodify("~/Programming/Eggsh/version_config.mk", ":p")) | buffer ~/Programming/Eggsh/version_config.mk | else | edit ~/Programming/Eggsh/version_config.mk | endif
-if &buftype ==# 'terminal'
-  silent file ~/Programming/Eggsh/version_config.mk
-endif
-balt ~/Programming/Eggsh/Makefile
-setlocal foldmethod=manual
-setlocal foldexpr=0
-setlocal foldmarker={{{,}}}
-setlocal foldignore=#
-setlocal foldlevel=0
-setlocal foldminlines=1
-setlocal foldnestmax=20
-setlocal foldenable
-silent! normal! zE
-let &fdl = &fdl
-let s:l = 4 - ((3 * winheight(0) + 8) / 17)
-if s:l < 1 | let s:l = 1 | endif
-keepjumps exe s:l
-normal! zt
-keepjumps 4
-normal! 018|
+keepjumps 120
+normal! 0
 lcd ~/Programming/Eggsh
 wincmd w
 argglobal
@@ -138,22 +118,19 @@ setlocal foldlevel=0
 setlocal foldminlines=1
 setlocal foldnestmax=20
 setlocal foldenable
-let s:l = 251 - ((16 * winheight(0) + 8) / 17)
+let s:l = 1637 - ((15 * winheight(0) + 8) / 16)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 251
-normal! 03|
+keepjumps 1637
+normal! 0
 lcd ~/Programming/Eggsh
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
-exe '2resize ' . ((&lines * 17 + 28) / 56)
+exe '2resize ' . ((&lines * 36 + 28) / 56)
 exe 'vert 2resize ' . ((&columns * 118 + 119) / 238)
-exe '3resize ' . ((&lines * 17 + 28) / 56)
+exe '3resize ' . ((&lines * 16 + 28) / 56)
 exe 'vert 3resize ' . ((&columns * 118 + 119) / 238)
-exe '4resize ' . ((&lines * 17 + 28) / 56)
-exe 'vert 4resize ' . ((&columns * 118 + 119) / 238)
 tabnext
 edit ~/Programming/Eggsh/include/tokenizer.h
 let s:save_splitbelow = &splitbelow
@@ -177,10 +154,10 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 exe '1resize ' . ((&lines * 16 + 28) / 56)
-exe 'vert 1resize ' . ((&columns * 118 + 119) / 238)
+exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
 exe '2resize ' . ((&lines * 36 + 28) / 56)
-exe 'vert 2resize ' . ((&columns * 118 + 119) / 238)
-exe 'vert 3resize ' . ((&columns * 119 + 119) / 238)
+exe 'vert 2resize ' . ((&columns * 119 + 119) / 238)
+exe 'vert 3resize ' . ((&columns * 118 + 119) / 238)
 argglobal
 balt ~/Programming/Eggsh/src/command_builder_and_tokenizer.c
 setlocal foldmethod=manual
@@ -193,19 +170,20 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 1 - ((0 * winheight(0) + 8) / 16)
+let s:l = 64 - ((8 * winheight(0) + 8) / 16)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
+keepjumps 64
 normal! 0
+lcd ~/Programming/Eggsh
 wincmd w
 argglobal
 if bufexists(fnamemodify("~/Programming/Eggsh/src/command_builder_and_tokenizer.c", ":p")) | buffer ~/Programming/Eggsh/src/command_builder_and_tokenizer.c | else | edit ~/Programming/Eggsh/src/command_builder_and_tokenizer.c | endif
 if &buftype ==# 'terminal'
   silent file ~/Programming/Eggsh/src/command_builder_and_tokenizer.c
 endif
-balt ~/Programming/Eggsh/main.c
+balt ~/Programming/Eggsh/.clang
 setlocal foldmethod=manual
 setlocal foldexpr=0
 setlocal foldmarker={{{,}}}
@@ -216,12 +194,13 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 85 - ((8 * winheight(0) + 18) / 36)
+let s:l = 215 - ((24 * winheight(0) + 18) / 36)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 85
-normal! 0
+keepjumps 215
+normal! 028|
+lcd ~/Programming/Eggsh
 wincmd w
 argglobal
 if bufexists(fnamemodify("term://~/Programming/Eggsh//253233:/usr/bin/bash", ":p")) | buffer term://~/Programming/Eggsh//253233:/usr/bin/bash | else | edit term://~/Programming/Eggsh//253233:/usr/bin/bash | endif
@@ -237,20 +216,21 @@ setlocal foldlevel=0
 setlocal foldminlines=1
 setlocal foldnestmax=20
 setlocal foldenable
-let s:l = 251 - ((52 * winheight(0) + 26) / 53)
+let s:l = 1637 - ((52 * winheight(0) + 26) / 53)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 251
-normal! 0
+keepjumps 1637
+normal! 03|
 lcd ~/Programming/Eggsh
 wincmd w
+3wincmd w
 exe '1resize ' . ((&lines * 16 + 28) / 56)
-exe 'vert 1resize ' . ((&columns * 118 + 119) / 238)
+exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
 exe '2resize ' . ((&lines * 36 + 28) / 56)
-exe 'vert 2resize ' . ((&columns * 118 + 119) / 238)
-exe 'vert 3resize ' . ((&columns * 119 + 119) / 238)
-tabnext 1
+exe 'vert 2resize ' . ((&columns * 119 + 119) / 238)
+exe 'vert 3resize ' . ((&columns * 118 + 119) / 238)
+tabnext 2
 set stal=1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf

@@ -89,6 +89,8 @@ static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
     // Scan through until we hit a newline, buffer end, or another single quote.
     // We will need to add stuff for handling when a command spans multiple lines after this.
     while(true) {
+        fprintf(stderr, "on \"%c\"\n", *tokenizer->remaining);
+
         switch(*tokenizer->remaining) {
             case '\0':
                 addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
@@ -105,6 +107,7 @@ static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
 
                 return returned;
             case '\'':
+            case '"':
                 tokenizer->inside_single_quotes = false;
 
                 addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
@@ -114,21 +117,13 @@ static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
                 return PARSE_COMMAND_NORMAL;
         }
 
-        // moving to the next character as long as we aren't on whitespace.
-        if(*tokenizer->remaining != ' ' && *tokenizer->remaining != '\t') {
-            // Add GOOD logic to add characters here
-            // ^ "what the fuck does the above comment mean?" - me, 4 months after writing that
-
-            // INCRIMENT_REMAINING macro couldn't be used here, since here we need to add token
-            // data before returning.
-            tokenizer->remaining++;
-            if(!(--tokenizer->remaining_length)) {
-                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
-                return returned | PARSE_COMMAND_OUT_OF_DATA;
-            }
-
-            continue;
+        tokenizer->remaining++;
+        if(!(--tokenizer->remaining_length)) {
+            addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+            return returned | PARSE_COMMAND_OUT_OF_DATA;
         }
+
+        continue;
 
         break;
     }
@@ -180,7 +175,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
     // Syncing lagged_remaining with remaining
     tokenizer->lagged_remaining = tokenizer->remaining;
 
-    // Looping over the reamaining part of our input, starting at a non-whitespace character.
+    // Looping over the remaining part of our input, starting at a non-whitespace character.
     // The loop has two loops for handling a word and handling whitespace respectively.
     while(true) {
         while(true) {
@@ -199,6 +194,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
                 case '\'':
+                case '"':
                     // call a function for handling single quotes
                     // return whatever status was returned by that function unless it's
                     // PARSE_COMMAND_NORMAL
@@ -543,6 +539,95 @@ START_TEST(token_test_single_quote_empty_parameter) {
     ck_assert_ptr_null(result[3]);
 } END_TEST
 
+START_TEST(token_test_single_quote_all_spaces_parameter) {
+    static char input[] = "Hi '    ' there!\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hi");
+    ck_assert_str_eq(result[1], "    ");
+    ck_assert_str_eq(result[2], "there!");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
+START_TEST(token_test_double_quote) {
+    static char input[] = "Hello, \"world!\"\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hello,");
+    ck_assert_str_eq(result[1], "world!");
+    ck_assert_ptr_null(result[2]);
+} END_TEST
+
+START_TEST(token_test_double_quote_spam) {
+    static char input[] = "Hello, \"w\"\"orld!\" ha\"h\"a\"ha\"\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hello,");
+    ck_assert_str_eq(result[1], "world!");
+    ck_assert_str_eq(result[2], "hahaha");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
+START_TEST(token_test_double_quote_spam_harder) {
+    static char input[] = "He\"\"\"\"\"\"\"\"\"\"llo, world! hahaha\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hello,");
+    ck_assert_str_eq(result[1], "world!");
+    ck_assert_str_eq(result[2], "hahaha");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
+START_TEST(token_test_double_quote_empty_parameter) {
+    static char input[] = "Hi \"\" there!\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hi");
+    ck_assert_str_eq(result[1], "");
+    ck_assert_str_eq(result[2], "there!");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
+START_TEST(token_test_double_quote_all_spaces_parameter) {
+    static char input[] = "Hi \"    \" there!\n";
+    Tokenizer cmd = newTokenizer();
+    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "Hi");
+    ck_assert_str_eq(result[1], "    ");
+    ck_assert_str_eq(result[2], "there!");
+    ck_assert_ptr_null(result[3]);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -564,6 +649,12 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_single_quote_spam);
     tcase_add_test(test_case_core, token_test_single_quote_spam_harder);
     tcase_add_test(test_case_core, token_test_single_quote_empty_parameter);
+    tcase_add_test(test_case_core, token_test_single_quote_all_spaces_parameter);
+    tcase_add_test(test_case_core, token_test_double_quote);
+    tcase_add_test(test_case_core, token_test_double_quote_spam);
+    tcase_add_test(test_case_core, token_test_double_quote_spam_harder);
+    tcase_add_test(test_case_core, token_test_double_quote_empty_parameter);
+    tcase_add_test(test_case_core, token_test_double_quote_all_spaces_parameter);
 
     suite_add_tcase(returned, test_case_core);
 
