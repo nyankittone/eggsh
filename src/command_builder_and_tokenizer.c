@@ -89,7 +89,15 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         tokenizer->remaining++; \
         if(!(--tokenizer->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
 
-    // scan through remaining segment of remaining byte-by-byte.
+    // scan through remaining segment of tokenizer->remaining byte-by-byte.
+
+    // NOTE: `tokenizer->remaining` and `tokenizer->lagged_remaining` are char pointers. They do
+    // *not* represent the number of bytes remaining until the end of the buffer we're going
+    // through; that would be `tokenizer->remaining_length`.
+
+    // If we're going back to running this function more than one time before the command finishes,
+    // and we're in the middle of some whitespace, we'll scan through until we encounter a
+    // non-whitespace character or see a line break.
     if(!tokenizer->scanning_word) {
         while(true) {
             switch(*tokenizer->remaining) {
@@ -110,8 +118,11 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         tokenizer->scanning_word = true;
     }
 
+    // Syncing lagged_remaining with remaining
     tokenizer->lagged_remaining = tokenizer->remaining;
 
+    // Looping over the reamaining part of our input, starting at a non-whitespace character.
+    // The loop has two loops for handling a word and handling whitespace respectively.
     while(true) {
         while(true) {
             switch(*tokenizer->remaining) {
@@ -128,13 +139,18 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     INCRIMENT_REMAINING
                     tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
+                case '\'':
+                    // blah blah blah
+                    break;
             }
 
+            // moving to the next character as long as we aren't on whitespace.
             if(*tokenizer->remaining != ' ' && *tokenizer->remaining != '\t') {
                 // Add GOOD logic to add characters here
+                // ^ "what the fuck does the above comment mean?" - me, 4 months after writing that
 
-                // INCRIMENT_REMAINING macro couldn't be used here. This mightr be a sign I should
-                // make a refactor here. Or maybe all of the tokenizer code. Who knows?
+                // INCRIMENT_REMAINING macro couldn't be used here, since here we need to add token
+                // data before returning.
                 tokenizer->remaining++;
                 if(!(--tokenizer->remaining_length)) {
                     addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
@@ -152,8 +168,11 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         newToken(tokenizer);
 
         INCRIMENT_REMAINING
-        tokenizer->lagged_remaining = tokenizer->remaining;
+        tokenizer->lagged_remaining = tokenizer->remaining; // Another sync with lagged_remaining
+                                                            // here
 
+        // TODO: This loop here is identical to the other one at the beginning of this function. I
+        // should extract this out to another function in this file, and maybe make it inline.
         while(true) {
             switch(*tokenizer->remaining) {
                 case '\0':
