@@ -172,6 +172,11 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         tokenizer->scanning_word = true;
     }
 
+    // this condition seems sus and I can't explain why...
+    if(tokenizer->inside_single_quotes && (returned |= handleSingleQuotes(tokenizer))) {
+        return returned;
+    }
+
     // Syncing lagged_remaining with remaining
     tokenizer->lagged_remaining = tokenizer->remaining;
 
@@ -198,8 +203,16 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     // return whatever status was returned by that function unless it's
                     // PARSE_COMMAND_NORMAL
                     tokenizer->inside_single_quotes = true;
+                    
+                    addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                    INCRIMENT_REMAINING
+                    tokenizer->lagged_remaining = tokenizer->remaining;
 
-                    break;
+                    if((returned |= handleSingleQuotes(tokenizer))) {
+                        return returned;
+                    }
+
+                    continue;
             }
 
             // moving to the next character as long as we aren't on whitespace.
