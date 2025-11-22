@@ -55,7 +55,9 @@ typedef struct {
                         // a word right now or not. Keeping this state is important so that it can
                         // persist between many calls to `tokenizeBuilderInput`.
     bool inside_single_quotes;
-    bool inside_double_quotes;
+    bool inside_double_quotes; // TODO: Consider replacing all of these boolean flags with a single
+                               // long that we bitmask on to get flags. That might be slower,
+                               // though.
 } Tokenizer;
 
 // Function for creating a new Tokenizer object. This function will cause the program to stop

@@ -83,7 +83,7 @@ Tokenizer *setTokenizerInput(Tokenizer *tokenizer, char *string, size_t length) 
     tokenizer->remaining++; \
     if(!(--tokenizer->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
 
-static TokenizeCommandReturn handleQuotes(Tokenizer *const tokenizer, char ending_char) {
+static TokenizeCommandReturn handleQuotes(Tokenizer *const tokenizer, char ending_char, bool *const make_false) {
     TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
 
     // Scan through until we hit a newline, buffer end, or another single quote.
@@ -106,7 +106,7 @@ static TokenizeCommandReturn handleQuotes(Tokenizer *const tokenizer, char endin
         }
 
         if(*tokenizer->remaining == ending_char) {
-            tokenizer->inside_single_quotes = false;
+            *make_false = false;
 
             addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
             INCRIMENT_REMAINING
@@ -130,11 +130,11 @@ static TokenizeCommandReturn handleQuotes(Tokenizer *const tokenizer, char endin
 }
 
 static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
-    return handleQuotes(tokenizer, '\'');
+    return handleQuotes(tokenizer, '\'', &tokenizer->inside_single_quotes);
 }
 
 static TokenizeCommandReturn handleDoubleQuotes(Tokenizer *const tokenizer) {
-    return handleQuotes(tokenizer, '"');
+    return handleQuotes(tokenizer, '"', &tokenizer->inside_double_quotes);
 }
 
 TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
@@ -324,6 +324,8 @@ Tokenizer *newCommand(Tokenizer *const tokenizer) {
     tokenizer->total_tokens = 0;
     tokenizer->tokens.bytes_written = 0;
     tokenizer->scanning_word = false;
+    tokenizer->inside_single_quotes = false; // These two might not need to be reset to false.
+    tokenizer->inside_double_quotes= false;
 
     return tokenizer;
 }
@@ -513,6 +515,27 @@ START_TEST(token_test_mixed_quotes2) {
     tests_assertNoCommand(&tokenizer);
 } END_TEST
 
+START_TEST(token_test_mixed_insanity) {
+    Tokenizer tokenizer = tests_gimmeTokenizer (
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+        "echo \"aaa 'b'\"\n"
+    );
+
+    for(int i = 0; i < 10; i++) {
+        tests_assertTokens(&tokenizer, "echo", "aaa 'b'", NULL);
+    }
+
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -544,6 +567,7 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_double_quote_all_spaces_parameter);
     tcase_add_test(test_case_core, token_test_mixed_quotes);
     tcase_add_test(test_case_core, token_test_mixed_quotes2);
+    tcase_add_test(test_case_core, token_test_mixed_insanity);
 
     suite_add_tcase(returned, test_case_core);
 
