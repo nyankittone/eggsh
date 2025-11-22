@@ -7,7 +7,7 @@ default shell, so I can dog-food it.
 - [O] Add parsing for single and double quotes, backslashes, and semicolons
   - [X] single quotes
   - [X] double quotes
-  - [ ] backslashes
+  - [X] backslashes
   - [ ] semicolons
 - [ ] Add proper handling of signals such as SIGINT so that, for example, the shell doesn't close when
   pressing Ctrl-C

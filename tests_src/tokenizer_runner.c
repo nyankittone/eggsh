@@ -20,9 +20,6 @@ Tokenizer tests_gimmeTokenizerWithLength(char *const string, const size_t length
 }
 
 void tests_assertTokensNoReset(Tokenizer *const tokenizer, ...) {
-    // In a loop, tokenize
-    // Keep doing this until a command stop or an out-of-data occurs
-
     assert(tokenizer != NULL);
 
     TokenizeCommandReturn result;

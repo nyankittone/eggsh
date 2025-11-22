@@ -122,34 +122,22 @@ static TokenizeCommandReturn handleQuotes(Tokenizer *const tokenizer, char endin
         }
 
         continue;
-
-        break;
     }
 
     return returned;
 }
 
-static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
+static inline TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
     return handleQuotes(tokenizer, '\'', &tokenizer->inside_single_quotes);
 }
 
-static TokenizeCommandReturn handleDoubleQuotes(Tokenizer *const tokenizer) {
+static inline TokenizeCommandReturn handleDoubleQuotes(Tokenizer *const tokenizer) {
     return handleQuotes(tokenizer, '"', &tokenizer->inside_double_quotes);
 }
 
-TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
-    assert(tokenizer != NULL);
-    if(tokenizer->remaining_length == 0) return PARSE_COMMAND_OUT_OF_DATA;
-
+static inline TokenizeCommandReturn scanWhitespace(Tokenizer *const tokenizer) {
     TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
 
-    // NOTE: `tokenizer->remaining` and `tokenizer->lagged_remaining` are char pointers. They do
-    // *not* represent the number of bytes remaining until the end of the buffer we're going
-    // through; that would be `tokenizer->remaining_length`.
-
-    // If we're going back to running this function more than one time before the command finishes,
-    // and we're in the middle of some whitespace, we'll scan through until we encounter a
-    // non-whitespace character or see a line break.
     if(!tokenizer->scanning_word) {
         while(true) {
             switch(*tokenizer->remaining) {
@@ -170,7 +158,23 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         tokenizer->scanning_word = true;
     }
 
-    // this condition seems sus and I can't explain why...
+    return returned;
+}
+
+TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
+    assert(tokenizer != NULL);
+    if(tokenizer->remaining_length == 0) return PARSE_COMMAND_OUT_OF_DATA;
+    TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
+
+    // NOTE: `tokenizer->remaining` and `tokenizer->lagged_remaining` are char pointers. They do
+    // *not* represent the number of bytes remaining until the end of the buffer we're going
+    // through; that would be `tokenizer->remaining_length`.
+
+    // If we're going back to running this function more than one time before the command finishes,
+    // and we're in the middle of some whitespace, we'll scan through until we encounter a
+    // non-whitespace character or see a line break.
+    if((returned |= scanWhitespace(tokenizer))) return returned;
+
     if(tokenizer->inside_single_quotes && (returned |= handleSingleQuotes(tokenizer))) {
         return returned;
     }
@@ -256,23 +260,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         tokenizer->lagged_remaining = tokenizer->remaining; // Another sync with lagged_remaining
                                                             // here
 
-        // TODO: This loop here is identical to the other one at the beginning of this function. I
-        // should extract this out to another function in this file, and maybe make it inline.
-        while(true) {
-            switch(*tokenizer->remaining) {
-                case '\0':
-                case ' ':
-                case '\t':
-                    INCRIMENT_REMAINING
-                    continue;
-                case '\n':
-                    returned |= PARSE_COMMAND_HIT_NEWLINE | PARSE_COMMAND_COMMAND_STOP;
-                    INCRIMENT_REMAINING
-                    return returned;
-            }
-
-            break;
-        }
+        if((returned |= scanWhitespace(tokenizer))) return returned;
 
         tokenizer->scanning_word = true;
         tokenizer->lagged_remaining = tokenizer->remaining;
