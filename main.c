@@ -157,9 +157,6 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
     if(isatty(file_descriptor)) {
         printVersionInfo(stderr);
 
-        // do {
-        //     fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
-        // } while(!runCommandFromFile(runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE));
         RunCommandFromFileReturn result = RUN_COMMAND_CONTINUE;
         while(result != RUN_COMMAND_STOP) {
             if(result == RUN_COMMAND_CONTINUE) {
