@@ -83,7 +83,7 @@ Tokenizer *setTokenizerInput(Tokenizer *tokenizer, char *string, size_t length) 
     tokenizer->remaining++; \
     if(!(--tokenizer->remaining_length)) return returned | PARSE_COMMAND_OUT_OF_DATA;
 
-static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
+static TokenizeCommandReturn handleQuotes(Tokenizer *const tokenizer, char ending_char) {
     TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
 
     // Scan through until we hit a newline, buffer end, or another single quote.
@@ -103,15 +103,16 @@ static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
                 tokenizer->lagged_remaining = tokenizer->remaining;
 
                 return returned;
-            case '\'':
-            case '"':
-                tokenizer->inside_single_quotes = false;
+        }
 
-                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
-                INCRIMENT_REMAINING
+        if(*tokenizer->remaining == ending_char) {
+            tokenizer->inside_single_quotes = false;
+
+            addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+            INCRIMENT_REMAINING
                 tokenizer->lagged_remaining = tokenizer->remaining;
 
-                return PARSE_COMMAND_NORMAL;
+            return PARSE_COMMAND_NORMAL;
         }
 
         tokenizer->remaining++;
@@ -126,6 +127,14 @@ static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
     }
 
     return returned;
+}
+
+static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
+    return handleQuotes(tokenizer, '\'');
+}
+
+static TokenizeCommandReturn handleDoubleQuotes(Tokenizer *const tokenizer) {
+    return handleQuotes(tokenizer, '"');
 }
 
 TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
@@ -166,6 +175,10 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
         return returned;
     }
 
+    if(tokenizer->inside_double_quotes && (returned |= handleDoubleQuotes(tokenizer))) {
+        return returned;
+    }
+
     // Syncing lagged_remaining with remaining
     tokenizer->lagged_remaining = tokenizer->remaining;
 
@@ -188,7 +201,6 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
                 case '\'':
-                case '"':
                     // call a function for handling single quotes
                     // return whatever status was returned by that function unless it's
                     // PARSE_COMMAND_NORMAL
@@ -199,6 +211,18 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     tokenizer->lagged_remaining = tokenizer->remaining;
 
                     if((returned |= handleSingleQuotes(tokenizer))) {
+                        return returned;
+                    }
+
+                    continue;
+                case '"':
+                    tokenizer->inside_double_quotes = true;
+                    
+                    addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                    INCRIMENT_REMAINING
+                    tokenizer->lagged_remaining = tokenizer->remaining;
+
+                    if((returned |= handleDoubleQuotes(tokenizer))) {
                         return returned;
                     }
 
@@ -477,6 +501,18 @@ START_TEST(token_test_quote_newlines) {
     tests_assertNoCommand(&tokenizer);
 }
 
+START_TEST(token_test_mixed_quotes) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo 'I am \"cool\"'\n");
+    tests_assertTokens(&tokenizer, "echo", "I am \"cool\"", NULL);
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
+
+START_TEST(token_test_mixed_quotes2) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo \"I am 'cool'\"\n");
+    tests_assertTokens(&tokenizer, "echo", "I am 'cool'", NULL);
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -506,6 +542,8 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_double_quote_spam_harder);
     tcase_add_test(test_case_core, token_test_double_quote_empty_parameter);
     tcase_add_test(test_case_core, token_test_double_quote_all_spaces_parameter);
+    tcase_add_test(test_case_core, token_test_mixed_quotes);
+    tcase_add_test(test_case_core, token_test_mixed_quotes2);
 
     suite_add_tcase(returned, test_case_core);
 
