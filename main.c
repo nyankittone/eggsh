@@ -62,6 +62,10 @@ static void runString(char *const string, CommandRunner *const runner) {
     while(true) {
         TokenizeCommandReturn result = tokenizeBuilderInput(&tokenizer);
         if(result & (PARSE_COMMAND_HIT_NEWLINE)) {
+            if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
+                continue;
+            }
+
             TokenIterator token_iterator = getTokenIterator(&tokenizer);
 
             executeCommand(runner, &token_iterator);

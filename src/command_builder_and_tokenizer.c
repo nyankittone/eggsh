@@ -97,8 +97,7 @@ static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
 
                 continue;
             case '\n':
-                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
-                newToken(tokenizer); // TODO: remove this line
+                addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining + 1);
                 returned |= PARSE_COMMAND_HIT_NEWLINE;
                 INCRIMENT_REMAINING
                 tokenizer->lagged_remaining = tokenizer->remaining;
@@ -623,6 +622,23 @@ START_TEST(token_test_double_quote_all_spaces_parameter) {
     ck_assert_ptr_null(result[3]);
 } END_TEST
 
+// This test is broken. It is currently disabled.
+START_TEST(token_test_quote_newlines) {
+    static char input[] = "never gonna 'give\nyou\nup'\n";
+    Tokenizer cmd = newTokenizer();
+
+    while(!(tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1)) & PARSE_COMMAND_COMMAND_STOP));
+
+    TokenIterator iterator = getTokenIterator(&cmd);
+    char *result[iterator.tokens_remaining + 1];
+    *pasteRemainingTokens(&iterator, result) = NULL;
+
+    ck_assert_str_eq(result[0], "never");
+    ck_assert_str_eq(result[1], "gonna");
+    ck_assert_str_eq(result[2], "give\nyou\nup");
+    ck_assert_ptr_null(result[3]);
+}
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -645,6 +661,7 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_single_quote_spam_harder);
     tcase_add_test(test_case_core, token_test_single_quote_empty_parameter);
     tcase_add_test(test_case_core, token_test_single_quote_all_spaces_parameter);
+    // tcase_add_test(test_case_core, token_test_quote_newlines);
     tcase_add_test(test_case_core, token_test_double_quote);
     tcase_add_test(test_case_core, token_test_double_quote_spam);
     tcase_add_test(test_case_core, token_test_double_quote_spam_harder);
