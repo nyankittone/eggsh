@@ -305,14 +305,13 @@ Tokenizer *newCommand(Tokenizer *const tokenizer) {
 }
 
 #ifdef RUN_TESTS
+
+#include <testing/tokenizer_runner.h>
+
 START_TEST(token_test_one) {
-    static char input[] = "hewwo\n";
-
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    ck_assert_uint_eq(cmd.total_tokens, 1);
-    ck_assert_str_eq(cmd.tokens.ptr, "hewwo");
+    Tokenizer tokenizer = tests_gimmeTokenizer("hewwo\n");
+    tests_assertTokens(&tokenizer, "hewwo", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_one_broken) {
@@ -325,114 +324,52 @@ START_TEST(token_test_one_broken) {
 } END_TEST
 
 START_TEST(token_test_many) {
-    static char input[] = "echo Hello, world!\n";
-
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    ck_assert_uint_eq(cmd.total_tokens, 3);
-
-    const char *string1 = cmd.tokens.ptr;
-    const char *string2 = string1 + strlen(string1) + 1;
-    const char *string3 = string2 + strlen(string2) + 1;
-
-    ck_assert_str_eq(string1, "echo");
-    ck_assert_str_eq(string2, "Hello,");
-    ck_assert_str_eq(string3, "world!");
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo Hello, world!\n");
+    tests_assertTokens(&tokenizer, "echo", "Hello,", "world!", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_null_bytes) {
     static char input[] = "ech\0o He\0\0ya! :""\0""3\n";
 
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    ck_assert_uint_eq(cmd.total_tokens, 3);
-
-    const char *string1 = cmd.tokens.ptr;
-    const char *string2 = string1 + strlen(string1) + 1;
-    const char *string3 = string2 + strlen(string2) + 1;
-
-    ck_assert_str_eq(string1, "echo");
-    ck_assert_str_eq(string2, "Heya!");
-    ck_assert_str_eq(string3, ":3");
+    Tokenizer tokenizer = tests_gimmeTokenizerWithLength(input, sizeof(input) - 1);
+    tests_assertTokens(&tokenizer, "echo", "Heya!", ":3", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_extra_space) {
-    static char input[] = "echo    meow\n";
-
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    ck_assert_uint_eq(cmd.total_tokens, 2);
-
-    const char *string1 = cmd.tokens.ptr;
-    const char *string2 = string1 + strlen(string1) + 1;
-
-    ck_assert_str_eq(string1, "echo");
-    ck_assert_str_eq(string2, "meow");
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo    meow\n");
+    tests_assertTokens(&tokenizer, "echo", "meow", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_two_commands) {
-    static char input1[] = "echo AAA\n";
-    static char input2[] = "echo BBB CCC\n";
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo AAA\necho BBB CCC\n");
+    tests_assertTokens(&tokenizer, "echo", "AAA", NULL);
+    tests_assertTokens(&tokenizer, "echo", "BBB", "CCC", NULL);
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
 
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input1, sizeof(input1) - 1));
-
-    ck_assert_uint_eq(cmd.total_tokens, 2);
-
-    const char *string1 = cmd.tokens.ptr;
-    const char *string2 = string1 + strlen(string1) + 1;
-
-    ck_assert_str_eq(string1, "echo");
-    ck_assert_str_eq(string2, "AAA");
-
-    tokenizeBuilderInput(setTokenizerInput(newCommand(&cmd), input2, sizeof(input2) - 1));
-
-    ck_assert_uint_eq(cmd.total_tokens, 3);
-
-    string1 = cmd.tokens.ptr;
-    string2 = string1 + strlen(string1) + 1;
-    const char *string3 = string2 + strlen(string2) + 1;
-
-    ck_assert_str_eq(string1, "echo");
-    ck_assert_str_eq(string2, "BBB");
-    ck_assert_str_eq(string3, "CCC");
+START_TEST(token_test_buffer_swap) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo AAA\n");
+    tests_assertTokens(&tokenizer, "echo", "AAA", NULL);
+    setTokenizerInput(&tokenizer, "echo BBB CCC\n", sizeof("echo BBB CCC\n") - 1);
+    tests_assertTokens(&tokenizer, "echo", "BBB", "CCC", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_two_inputs) {
-    static char input1[] = "echo AAA";
-    static char input2[] = " BBB CCC\n";
-
-    Tokenizer cmd = newTokenizer();
-    TokenizeCommandReturn code = tokenizeBuilderInput(setTokenizerInput(&cmd, input1, sizeof(input1) - 1));
-    ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA);
-
-    code = tokenizeBuilderInput(setTokenizerInput(&cmd, input2, sizeof(input2) - 1));
-    ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA | PARSE_COMMAND_HIT_NEWLINE | PARSE_COMMAND_COMMAND_STOP);
-
-    ck_assert_uint_eq(cmd.total_tokens, 4);
-
-    const char *string1 = cmd.tokens.ptr;
-    const char *string2 = string1 + strlen(string1) + 1;
-    const char *string3 = string2 + strlen(string2) + 1;
-    const char *string4 = string3 + strlen(string3) + 1;
-
-    ck_assert_str_eq(string1, "echo");
-    ck_assert_str_eq(string2, "AAA");
-    ck_assert_str_eq(string3, "BBB");
-    ck_assert_str_eq(string4, "CCC");
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo AAA");
+    tests_assertIncompleteCommand(&tokenizer);
+    setTokenizerInput(&tokenizer, " BBB CCC\n", sizeof(" BBB CCC\n") - 1);
+    tests_assertTokensNoReset(&tokenizer, "echo", "AAA", "BBB", "CCC", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_leading_whitespace) {
-    static char input[] = "          \t     bruh\n";
-
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    ck_assert_uint_eq(cmd.total_tokens, 1);
-    ck_assert_str_eq(cmd.tokens.ptr, "bruh");
+    Tokenizer tokenizer = tests_gimmeTokenizer("          \t     bruh\n");
+    tests_assertTokens(&tokenizer, "bruh", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_iterator) {
@@ -475,168 +412,69 @@ START_TEST(token_test_iterator_filling) {
 } END_TEST
 
 START_TEST(token_test_single_quote) {
-    static char input[] = "Hello, 'world!'\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hello,");
-    ck_assert_str_eq(result[1], "world!");
-    ck_assert_ptr_null(result[2]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hello, 'world!'\n");
+    tests_assertTokens(&tokenizer, "Hello,", "world!", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_single_quote_spam) {
-    static char input[] = "Hello, 'w''orld!' ha'h'a'ha'\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hello,");
-    ck_assert_str_eq(result[1], "world!");
-    ck_assert_str_eq(result[2], "hahaha");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hello, 'w''orld!' ha'h'a'ha'\n");
+    tests_assertTokens(&tokenizer, "Hello,", "world!", "hahaha", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_single_quote_spam_harder) {
-    static char input[] = "He''''''''''llo, world! hahaha\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hello,");
-    ck_assert_str_eq(result[1], "world!");
-    ck_assert_str_eq(result[2], "hahaha");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("He''''''''''llo, world! hahaha\n");
+    tests_assertTokens(&tokenizer, "Hello,", "world!", "hahaha", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_single_quote_empty_parameter) {
-    static char input[] = "Hi '' there!\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hi");
-    ck_assert_str_eq(result[1], "");
-    ck_assert_str_eq(result[2], "there!");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hi '' there!\n");
+    tests_assertTokens(&tokenizer, "Hi", "", "there!", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_single_quote_all_spaces_parameter) {
-    static char input[] = "Hi '    ' there!\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hi");
-    ck_assert_str_eq(result[1], "    ");
-    ck_assert_str_eq(result[2], "there!");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hi '    ' there!\n");
+    tests_assertTokens(&tokenizer, "Hi", "    ", "there!", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_double_quote) {
-    static char input[] = "Hello, \"world!\"\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hello,");
-    ck_assert_str_eq(result[1], "world!");
-    ck_assert_ptr_null(result[2]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hello, \"world!\"\n");
+    tests_assertTokens(&tokenizer, "Hello,", "world!", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_double_quote_spam) {
-    static char input[] = "Hello, \"w\"\"orld!\" ha\"h\"a\"ha\"\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hello,");
-    ck_assert_str_eq(result[1], "world!");
-    ck_assert_str_eq(result[2], "hahaha");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hello, \"w\"\"orld!\" ha\"h\"a\"ha\"\n");
+    tests_assertTokens(&tokenizer, "Hello,", "world!", "hahaha", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_double_quote_spam_harder) {
-    static char input[] = "He\"\"\"\"\"\"\"\"\"\"llo, world! hahaha\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hello,");
-    ck_assert_str_eq(result[1], "world!");
-    ck_assert_str_eq(result[2], "hahaha");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("He\"\"\"\"\"\"\"\"\"\"llo, world! hahaha\n");
+    tests_assertTokens(&tokenizer, "Hello,", "world!", "hahaha", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_double_quote_empty_parameter) {
-    static char input[] = "Hi \"\" there!\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hi");
-    ck_assert_str_eq(result[1], "");
-    ck_assert_str_eq(result[2], "there!");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hi \"\" there!\n");
+    tests_assertTokens(&tokenizer, "Hi", "", "there!", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
 START_TEST(token_test_double_quote_all_spaces_parameter) {
-    static char input[] = "Hi \"    \" there!\n";
-    Tokenizer cmd = newTokenizer();
-    tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "Hi");
-    ck_assert_str_eq(result[1], "    ");
-    ck_assert_str_eq(result[2], "there!");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("Hi \"    \" there!\n");
+    tests_assertTokens(&tokenizer, "Hi", "    ", "there!", NULL);
+    tests_assertNoCommand(&tokenizer);
 } END_TEST
 
-// This test is broken. It is currently disabled.
 START_TEST(token_test_quote_newlines) {
-    static char input[] = "never gonna 'give\nyou\nup'\n";
-    Tokenizer cmd = newTokenizer();
-
-    while(!(tokenizeBuilderInput(setTokenizerInput(&cmd, input, sizeof(input) - 1)) & PARSE_COMMAND_COMMAND_STOP));
-
-    TokenIterator iterator = getTokenIterator(&cmd);
-    char *result[iterator.tokens_remaining + 1];
-    *pasteRemainingTokens(&iterator, result) = NULL;
-
-    ck_assert_str_eq(result[0], "never");
-    ck_assert_str_eq(result[1], "gonna");
-    ck_assert_str_eq(result[2], "give\nyou\nup");
-    ck_assert_ptr_null(result[3]);
+    Tokenizer tokenizer = tests_gimmeTokenizer("never gonna 'give\nyou\nup'\n");
+    tests_assertTokens(&tokenizer, "never", "gonna", "give\nyou\nup", NULL);
+    tests_assertNoCommand(&tokenizer);
 }
 
 Suite *tests_tokenizerSuite(void) {
@@ -644,7 +482,7 @@ Suite *tests_tokenizerSuite(void) {
     TCase *test_case_core;
 
     returned = suite_create("Tokenizer");
-    test_case_core = tcase_create("Integration");
+    test_case_core = tcase_create("Tokenizer Integration");
 
     tcase_add_test(test_case_core, token_test_one);
     tcase_add_test(test_case_core, token_test_one_broken);
@@ -652,6 +490,7 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_null_bytes);
     tcase_add_test(test_case_core, token_test_extra_space);
     tcase_add_test(test_case_core, token_test_two_commands);
+    tcase_add_test(test_case_core, token_test_buffer_swap);
     tcase_add_test(test_case_core, token_test_two_inputs);
     tcase_add_test(test_case_core, token_test_leading_whitespace);
     tcase_add_test(test_case_core, token_test_iterator);
@@ -661,7 +500,7 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_single_quote_spam_harder);
     tcase_add_test(test_case_core, token_test_single_quote_empty_parameter);
     tcase_add_test(test_case_core, token_test_single_quote_all_spaces_parameter);
-    // tcase_add_test(test_case_core, token_test_quote_newlines);
+    tcase_add_test(test_case_core, token_test_quote_newlines);
     tcase_add_test(test_case_core, token_test_double_quote);
     tcase_add_test(test_case_core, token_test_double_quote_spam);
     tcase_add_test(test_case_core, token_test_double_quote_spam_harder);

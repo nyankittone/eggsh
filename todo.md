@@ -4,7 +4,7 @@
 The major goal of this release is to get eggsh into the minimal viable state needed for making it my
 default shell, so I can dog-food it.
 - [X] Add multi-line command support
-- [ ] Add parsing for single and double quotes, backslashes, and semicolons
+- [O] Add parsing for single and double quotes, backslashes, and semicolons
   - [X] single quotes
   - [X] double quotes
   - [ ] backslashes
