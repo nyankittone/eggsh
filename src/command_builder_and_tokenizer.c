@@ -89,8 +89,6 @@ static TokenizeCommandReturn handleSingleQuotes(Tokenizer *const tokenizer) {
     // Scan through until we hit a newline, buffer end, or another single quote.
     // We will need to add stuff for handling when a command spans multiple lines after this.
     while(true) {
-        fprintf(stderr, "on \"%c\"\n", *tokenizer->remaining);
-
         switch(*tokenizer->remaining) {
             case '\0':
                 addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
