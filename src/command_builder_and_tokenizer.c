@@ -135,9 +135,6 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
 
     TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
 
-
-    // scan through remaining segment of tokenizer->remaining byte-by-byte.
-
     // NOTE: `tokenizer->remaining` and `tokenizer->lagged_remaining` are char pointers. They do
     // *not* represent the number of bytes remaining until the end of the buffer we're going
     // through; that would be `tokenizer->remaining_length`.
@@ -154,7 +151,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     INCRIMENT_REMAINING
                     continue;
                 case '\n':
-                    returned |= PARSE_COMMAND_HIT_NEWLINE;
+                    returned |= PARSE_COMMAND_HIT_NEWLINE | PARSE_COMMAND_COMMAND_STOP;
                     INCRIMENT_REMAINING
                     return returned;
             }
@@ -187,7 +184,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                 case '\n':
                     addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
                     newToken(tokenizer);
-                    returned |= PARSE_COMMAND_HIT_NEWLINE;
+                    returned |= PARSE_COMMAND_HIT_NEWLINE | PARSE_COMMAND_COMMAND_STOP;
                     INCRIMENT_REMAINING
                     tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
@@ -246,7 +243,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     INCRIMENT_REMAINING
                     continue;
                 case '\n':
-                    returned |= PARSE_COMMAND_HIT_NEWLINE;
+                    returned |= PARSE_COMMAND_HIT_NEWLINE | PARSE_COMMAND_COMMAND_STOP;
                     INCRIMENT_REMAINING
                     return returned;
             }
@@ -414,7 +411,7 @@ START_TEST(token_test_two_inputs) {
     ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA);
 
     code = tokenizeBuilderInput(setTokenizerInput(&cmd, input2, sizeof(input2) - 1));
-    ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA | PARSE_COMMAND_HIT_NEWLINE);
+    ck_assert_uint_eq(code, PARSE_COMMAND_OUT_OF_DATA | PARSE_COMMAND_HIT_NEWLINE | PARSE_COMMAND_COMMAND_STOP);
 
     ck_assert_uint_eq(cmd.total_tokens, 4);
 

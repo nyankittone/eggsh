@@ -76,8 +76,13 @@ static void runString(char *const string, CommandRunner *const runner) {
     nukeTokenizer(&tokenizer);
 }
 
-// Realllly should not make this an obtuse `bool` return...
-static bool runCommandFromFile (
+typedef enum {
+    RUN_COMMAND_CONTINUE,
+    RUN_COMMAND_STOP,
+    RUN_COMMAND_NEXT_LINE,
+} RunCommandFromFileReturn;
+
+static RunCommandFromFileReturn runCommandFromFile (
     CommandRunner *const runner, Tokenizer *const tokenizer,
     const int file_descriptor, char *const buffer,
     const int buffer_size
@@ -86,11 +91,15 @@ static bool runCommandFromFile (
 
     TokenizeCommandReturn result = tokenizeBuilderInput(tokenizer);
     if((result & PARSE_COMMAND_HIT_NEWLINE)) {
+        if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
+            return RUN_COMMAND_NEXT_LINE;
+        }
+
         TokenIterator token_iterator = getTokenIterator(tokenizer);
         executeCommand(runner, &token_iterator);
         newCommand(tokenizer);
 
-        return false;
+        return RUN_COMMAND_CONTINUE;
     }
 
     // This is just a placeholder until proper handling of this case pops up. At the moment, this
@@ -98,7 +107,7 @@ static bool runCommandFromFile (
     assert((result & PARSE_COMMAND_OUT_OF_DATA) == true);
 
     buffer_length = read(file_descriptor, buffer, buffer_size);
-    if(!buffer_length) return true; // A buffer length of zero means we hit EOF
+    if(!buffer_length) return RUN_COMMAND_STOP; // A buffer length of zero means we hit EOF
 
     // add text read to builder for processing
     setTokenizerInput(tokenizer, buffer, buffer_length);
@@ -119,12 +128,16 @@ static bool runCommandFromFile (
         }
     }
 
+    if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
+        return RUN_COMMAND_NEXT_LINE;
+    }
+
     // run a command
     TokenIterator token_iterator = getTokenIterator(tokenizer);
     executeCommand(runner, &token_iterator);
     newCommand(tokenizer);
 
-    return false;
+    return RUN_COMMAND_CONTINUE;
 }
 
 static void runFile(int file_descriptor, CommandRunner *const runner) {
@@ -140,11 +153,23 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
     if(isatty(file_descriptor)) {
         printVersionInfo(stderr);
 
-        do {
-            fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
-        } while(!runCommandFromFile(runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE));
+        // do {
+        //     fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
+        // } while(!runCommandFromFile(runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE));
+        RunCommandFromFileReturn result = RUN_COMMAND_CONTINUE;
+        while(result != RUN_COMMAND_STOP) {
+            if(result == RUN_COMMAND_CONTINUE) {
+                fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
+            } else {
+                fputs("\33[1;35m?\33[m ", stderr);
+            }
+
+            result = runCommandFromFile(runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE);
+        }
     } else {
-        while(!runCommandFromFile(runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE));
+        while (runCommandFromFile (
+            runner, &cmd, file_descriptor, buffer, READ_BUFFER_SIZE
+        ) != RUN_COMMAND_STOP);
     }
 
     nukeTokenizer(&cmd);
