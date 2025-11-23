@@ -231,6 +231,27 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     }
 
                     continue;
+                case '\\':
+                    addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                    INCRIMENT_REMAINING
+                    tokenizer->lagged_remaining = tokenizer->remaining;
+
+                    // :3
+
+                    // TODO: Add case for when a newline after a backslash happens. This part looks
+                    // really sus to me.
+                    if(*tokenizer->remaining == '\n') {
+                        INCRIMENT_REMAINING
+                        tokenizer->lagged_remaining = tokenizer->remaining;
+                        tokenizer->scanning_word = false; // ????
+                        return returned | PARSE_COMMAND_HIT_NEWLINE;
+                    }
+
+                    addToToken(tokenizer, tokenizer->remaining, 1);
+                    INCRIMENT_REMAINING
+                    tokenizer->lagged_remaining = tokenizer->remaining;
+
+                    continue;
             }
 
             // moving to the next character as long as we aren't on whitespace.
@@ -524,6 +545,43 @@ START_TEST(token_test_mixed_insanity) {
     tests_assertNoCommand(&tokenizer);
 } END_TEST
 
+START_TEST(token_test_escape_quotes) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo \\'steamed hams\\'\necho \\\"aroura borealis\\\"\n");
+    tests_assertTokens(&tokenizer, "echo", "'steamed", "hams'", NULL);
+    tests_assertTokens(&tokenizer, "echo", "\"aroura", "borealis\"", NULL);
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
+
+START_TEST(token_test_escape_lines) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo aaaaa \\\nbbbbbb\n");
+    tests_assertTokens(&tokenizer, "echo", "aaaaa", "bbbbbb", NULL);
+    tests_assertNoCommand(&tokenizer);
+}
+
+START_TEST(token_test_escape_lines_one_token) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo x\\\ny\\\nz\n");
+    tests_assertTokens(&tokenizer, "echo", "xyz", NULL);
+    tests_assertNoCommand(&tokenizer);
+}
+ 
+START_TEST(token_test_escape_lines_with_space) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo a \\\n   b\n");
+    tests_assertTokens(&tokenizer, "echo", "a", "b", NULL);
+    tests_assertNoCommand(&tokenizer);
+}
+
+START_TEST(token_test_many_escape_lines) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo a\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\nb\n");
+    tests_assertTokens(&tokenizer, "echo", "ab", NULL);
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
+
+START_TEST(token_test_many_escape_lines2) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("echo a \\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\n\\\nb\n");
+    tests_assertTokens(&tokenizer, "echo", "a", "b", NULL);
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -556,6 +614,12 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_mixed_quotes);
     tcase_add_test(test_case_core, token_test_mixed_quotes2);
     tcase_add_test(test_case_core, token_test_mixed_insanity);
+    tcase_add_test(test_case_core, token_test_escape_quotes);
+    tcase_add_test(test_case_core, token_test_escape_lines);
+    tcase_add_test(test_case_core, token_test_escape_lines_one_token);
+    tcase_add_test(test_case_core, token_test_escape_lines_with_space);
+    tcase_add_test(test_case_core, token_test_many_escape_lines);
+    tcase_add_test(test_case_core, token_test_many_escape_lines2);
 
     suite_add_tcase(returned, test_case_core);
 
