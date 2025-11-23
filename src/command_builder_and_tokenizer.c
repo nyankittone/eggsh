@@ -582,6 +582,12 @@ START_TEST(token_test_many_escape_lines2) {
     tests_assertNoCommand(&tokenizer);
 } END_TEST
 
+START_TEST(token_test_escaped_spaces) {
+    Tokenizer tokenizer = tests_gimmeTokenizer("loooong\\ \\ \\ \\ \\ \\ \\ \\ \\ \\ space\n");
+    tests_assertTokens(&tokenizer, "loooong          space", NULL);
+    tests_assertNoCommand(&tokenizer);
+} END_TEST
+
 Suite *tests_tokenizerSuite(void) {
     Suite *returned;
     TCase *test_case_core;
@@ -620,6 +626,7 @@ Suite *tests_tokenizerSuite(void) {
     tcase_add_test(test_case_core, token_test_escape_lines_with_space);
     tcase_add_test(test_case_core, token_test_many_escape_lines);
     tcase_add_test(test_case_core, token_test_many_escape_lines2);
+    tcase_add_test(test_case_core, token_test_escaped_spaces);
 
     suite_add_tcase(returned, test_case_core);
 
