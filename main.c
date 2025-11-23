@@ -61,16 +61,12 @@ static void runString(char *const string, CommandRunner *const runner) {
 
     while(true) {
         TokenizeCommandReturn result = tokenizeBuilderInput(&tokenizer);
-        if(result & (PARSE_COMMAND_HIT_NEWLINE)) {
-            if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
-                continue;
-            }
-
+        if(result & (PARSE_COMMAND_COMMAND_STOP)) {
             TokenIterator token_iterator = getTokenIterator(&tokenizer);
 
             executeCommand(runner, &token_iterator);
             newCommand(&tokenizer);
-        }
+        } else if(result & PARSE_COMMAND_HIT_NEWLINE) continue;
 
         if(result & PARSE_COMMAND_OUT_OF_DATA) {
             break;
@@ -99,6 +95,12 @@ static RunCommandFromFileReturn runCommandFromFile (
             return RUN_COMMAND_NEXT_LINE;
         }
 
+        TokenIterator token_iterator = getTokenIterator(tokenizer);
+        executeCommand(runner, &token_iterator);
+        newCommand(tokenizer);
+
+        return RUN_COMMAND_CONTINUE;
+    } else if(result & PARSE_COMMAND_COMMAND_STOP) {
         TokenIterator token_iterator = getTokenIterator(tokenizer);
         executeCommand(runner, &token_iterator);
         newCommand(tokenizer);

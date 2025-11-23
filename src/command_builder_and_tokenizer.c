@@ -204,6 +204,14 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     INCRIMENT_REMAINING
                     tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
+                case ';':
+                    fputs("FUCK\n", stderr);
+                    addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
+                    newToken(tokenizer);
+                    returned |= PARSE_COMMAND_COMMAND_STOP;
+                    INCRIMENT_REMAINING
+                    tokenizer->lagged_remaining = tokenizer->remaining;
+                    return returned;
                 case '\'':
                     // call a function for handling single quotes
                     // return whatever status was returned by that function unless it's
