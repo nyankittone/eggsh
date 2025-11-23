@@ -30,7 +30,7 @@ static int hashDirectory(HashMap *const map, char *const path) {
     const size_t path_length = strlen(path);
     struct stat file_stats;
 
-    for(struct dirent *directory_entry; directory_entry = readdir(directory);) {
+    for(struct dirent *directory_entry; (directory_entry = readdir(directory));) {
         // concatenate the filename with its associated directory. I'll probably want a proper,
         // **fast**, way of doing this concatination work, but for now, I'll just shove it into a
         // VLA until I find something faster... or maybe this is the fastest reasonable way to do
@@ -68,7 +68,7 @@ CommandRunner makeTheRunnerIdk(KeyValuePair *const path_map_ptr, const size_t pa
 
     for (
         char *colon_ptr = returned.path_env_store, *old_ptr = returned.path_env_store;
-        colon_ptr = strchr(colon_ptr, ':');
+        (colon_ptr = strchr(colon_ptr, ':'));
         old_ptr = colon_ptr
     ) {
         *(colon_ptr++) = '\0';
@@ -122,18 +122,24 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
     }
 
     // get the first token from the iterator
-    char *const first_token = nextToken(iterator);
-    if(!first_token) {
-        return NO_EXIT_STATUS;
-    }
+    // char *const first_token = nextToken(iterator);
+    // if(!first_token) {
+    //     return NO_EXIT_STATUS;
+    // }
+
+    *pasteRemainingTokens(iterator, runner->command_line_buffer) = NULL;
+    #ifndef NDEBUG
+        for(char **thing = runner->command_line_buffer; *thing; thing++) {
+            fprintf(stderr, "\"%s\"\n", *thing);
+        }
+    #endif
 
     // check if it's a built-in shell command first. If so, run the corresponding builtin
     {
-        const BuiltinAndKey *builtin = getShellBuiltin(first_token, strlen(first_token));
+        const BuiltinAndKey *builtin = getShellBuiltin (
+            runner->command_line_buffer[0], strlen(runner->command_line_buffer[0])
+        );
         if(builtin) {
-            *runner->command_line_buffer = first_token;
-            *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
-
             return (ExitStatus) {
                 .program_exited = true,
                 .exit_code = builtin->function(runner->command_line_buffer),
@@ -143,9 +149,6 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
 
     // If it's not a shell builtin, just add all of the tokens to the buffer and try running an
     // external command
-    *runner->command_line_buffer = first_token;
-    *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
-
     char *const base_directory = getFromMap(&runner->path_map, runner->command_line_buffer[0]);
     if(!base_directory) return actuallySpawnCommand(runner->command_line_buffer[0], runner->command_line_buffer);
 
