@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 500
+#include <signal.h>
 
 #include <builtin_commands.h>
 #include <tokenizer.h>
@@ -89,13 +90,28 @@ CommandRunner *byeByeCommandRunner(CommandRunner *const runner) {
     return runner;
 }
 
+static void signalNoop(int nada) {
+    // sigaction(SIGINT, &(struct sigaction){
+    //     .sa_handler = &signalNoop,
+    // }, NULL);
+    fputs("FART!\n", stderr);
+}
+
 static ExitStatus actuallySpawnCommand(const char *const program_path, char **const parameters) {
+    struct sigaction parent_int_handle;
+    sigaction(SIGINT, &(struct sigaction) { // Is this even the best place to handle a signal?
+        .sa_handler = SIG_IGN,
+        .sa_flags = SA_RESETHAND,
+    }, &parent_int_handle);
+
     pid_t child = fork();
     switch(child) {
         case -1:
             fputs("oops something went wrong and I didn't feel like doing error handling lmao\n", stderr);
             return NO_EXIT_STATUS;
         case 0:
+            sigaction(SIGINT, &parent_int_handle, NULL);
+
             execv(program_path, parameters);
             perror("Failed to exec");
             exit(255);
@@ -103,6 +119,8 @@ static ExitStatus actuallySpawnCommand(const char *const program_path, char **co
 
     int exit_info;
     wait(&exit_info);
+
+    // sigaction(SIGINT, &parent_int_handle, NULL);
 
     return (ExitStatus) {true, WEXITSTATUS(exit_info)};
 }
@@ -121,13 +139,12 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
         );
     }
 
-    // get the first token from the iterator
-    // char *const first_token = nextToken(iterator);
-    // if(!first_token) {
-    //     return NO_EXIT_STATUS;
-    // }
+    runner->command_line_buffer[0] = nextToken(iterator);
+    if(!runner->command_line_buffer[0]) {
+        return NO_EXIT_STATUS;
+    }
+    *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
 
-    *pasteRemainingTokens(iterator, runner->command_line_buffer) = NULL;
     #ifndef NDEBUG
         for(char **thing = runner->command_line_buffer; *thing; thing++) {
             fprintf(stderr, "\"%s\"\n", *thing);
