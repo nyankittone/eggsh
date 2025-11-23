@@ -90,13 +90,6 @@ CommandRunner *byeByeCommandRunner(CommandRunner *const runner) {
     return runner;
 }
 
-static void signalNoop(int nada) {
-    // sigaction(SIGINT, &(struct sigaction){
-    //     .sa_handler = &signalNoop,
-    // }, NULL);
-    fputs("FART!\n", stderr);
-}
-
 static ExitStatus actuallySpawnCommand(const char *const program_path, char **const parameters) {
     struct sigaction parent_int_handle;
     sigaction(SIGINT, &(struct sigaction) { // Is this even the best place to handle a signal?
@@ -110,8 +103,6 @@ static ExitStatus actuallySpawnCommand(const char *const program_path, char **co
             fputs("oops something went wrong and I didn't feel like doing error handling lmao\n", stderr);
             return NO_EXIT_STATUS;
         case 0:
-            sigaction(SIGINT, &parent_int_handle, NULL);
-
             execv(program_path, parameters);
             perror("Failed to exec");
             exit(255);
@@ -120,7 +111,7 @@ static ExitStatus actuallySpawnCommand(const char *const program_path, char **co
     int exit_info;
     wait(&exit_info);
 
-    // sigaction(SIGINT, &parent_int_handle, NULL);
+    sigaction(SIGINT, &parent_int_handle, NULL);
 
     return (ExitStatus) {true, WEXITSTATUS(exit_info)};
 }
