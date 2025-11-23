@@ -82,6 +82,9 @@ typedef enum {
     RUN_COMMAND_NEXT_LINE,
 } RunCommandFromFileReturn;
 
+// This code does not correctly handle command stops that are not caused by a line break (eg. a
+// semicolon character). So semicolon characters are not handled the way they should when reading
+// from a file or running in interactive mode...
 static RunCommandFromFileReturn runCommandFromFile (
     CommandRunner *const runner, Tokenizer *const tokenizer,
     const int file_descriptor, char *const buffer,
@@ -95,12 +98,6 @@ static RunCommandFromFileReturn runCommandFromFile (
             return RUN_COMMAND_NEXT_LINE;
         }
 
-        TokenIterator token_iterator = getTokenIterator(tokenizer);
-        executeCommand(runner, &token_iterator);
-        newCommand(tokenizer);
-
-        return RUN_COMMAND_CONTINUE;
-    } else if(result & PARSE_COMMAND_COMMAND_STOP) {
         TokenIterator token_iterator = getTokenIterator(tokenizer);
         executeCommand(runner, &token_iterator);
         newCommand(tokenizer);
