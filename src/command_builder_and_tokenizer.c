@@ -138,7 +138,7 @@ static inline TokenizeCommandReturn handleDoubleQuotes(Tokenizer *const tokenize
 static inline TokenizeCommandReturn scanWhitespace(Tokenizer *const tokenizer) {
     TokenizeCommandReturn returned = PARSE_COMMAND_NORMAL;
 
-    if(!tokenizer->scanning_word) {
+    // if(!tokenizer->scanning_word) {
         while(true) {
             switch(*tokenizer->remaining) {
                 case '\0':
@@ -156,7 +156,7 @@ static inline TokenizeCommandReturn scanWhitespace(Tokenizer *const tokenizer) {
         }
 
         tokenizer->scanning_word = true;
-    }
+    // }
 
     return returned;
 }
@@ -173,7 +173,7 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
     // If we're going back to running this function more than one time before the command finishes,
     // and we're in the middle of some whitespace, we'll scan through until we encounter a
     // non-whitespace character or see a line break.
-    if((returned |= scanWhitespace(tokenizer))) return returned;
+    if(!tokenizer->scanning_word && (returned |= scanWhitespace(tokenizer))) return returned;
 
     if(tokenizer->inside_single_quotes && (returned |= handleSingleQuotes(tokenizer))) {
         return returned;
@@ -239,13 +239,11 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     // :3
 
                     if(*tokenizer->remaining == '\n') {
-                        fputs("meow meow, you did an escape!!!\n", stderr);
+                        tokenizer->scanning_word = false; // ????
                         returned |= PARSE_COMMAND_HIT_NEWLINE;
                         INCRIMENT_REMAINING
                         tokenizer->lagged_remaining = tokenizer->remaining;
-                        tokenizer->scanning_word = false; // ????
                         
-                        fprintf(stderr, "grrrrr %d\n", returned);
                         return returned;
                     }
 

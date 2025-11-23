@@ -95,7 +95,6 @@ static RunCommandFromFileReturn runCommandFromFile (
 
     TokenizeCommandReturn result = tokenizeBuilderInput(tokenizer);
     if((result & PARSE_COMMAND_HIT_NEWLINE)) {
-    fputs("bruh?\n", stderr);
         if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
             return RUN_COMMAND_NEXT_LINE;
         }
