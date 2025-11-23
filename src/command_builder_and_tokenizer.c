@@ -238,13 +238,15 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
 
                     // :3
 
-                    // TODO: Add case for when a newline after a backslash happens. This part looks
-                    // really sus to me.
                     if(*tokenizer->remaining == '\n') {
+                        fputs("meow meow, you did an escape!!!\n", stderr);
+                        returned |= PARSE_COMMAND_HIT_NEWLINE;
                         INCRIMENT_REMAINING
                         tokenizer->lagged_remaining = tokenizer->remaining;
                         tokenizer->scanning_word = false; // ????
-                        return returned | PARSE_COMMAND_HIT_NEWLINE;
+                        
+                        fprintf(stderr, "grrrrr %d\n", returned);
+                        return returned;
                     }
 
                     addToToken(tokenizer, tokenizer->remaining, 1);
