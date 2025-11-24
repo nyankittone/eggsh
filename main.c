@@ -1,4 +1,5 @@
-#define _POSIX_C_SOURCE 199309L
+// #define _POSIX_C_SOURCE 199309L
+#define _XOPEN_SOURCE 500
 
 #include <errno.h>
 #include <signal.h>
@@ -61,7 +62,10 @@ int noSignal(const int signal, struct sigaction *const old_handler) {
 
 void handleSigint(int sdfsd) {
     fputc('\n', stderr);
-    signal(SIGINT, &handleSigint);
+    sigaction(SIGINT, &(struct sigaction) {
+        .sa_handler = &handleSigint,
+        .sa_flags = SA_NODEFER,
+    }, NULL);
     longjmp(sigint_buf, 1);
 }
 
@@ -74,13 +78,10 @@ void setupSignals(void) {
     noSignal(SIGTTOU, NULL);
     noSignal(SIGTSTP, NULL);
 
-    // sigaction(SIGINT, &(struct sigaction) {
-    //     .sa_handler = &handleSigint,
-    // }, NULL);
-    signal(SIGINT, &handleSigint); // TODO: Figure out how to use sigaction here. for some reason, I
-                                   // can re-install the same signal multiple times with signal, but
-                                   // not with sigaction. Maybe I should look at some of the flags
-                                   // for sigaction.
+    sigaction(SIGINT, &(struct sigaction) {
+        .sa_handler = &handleSigint,
+        .sa_flags = SA_NODEFER,
+    }, NULL);
 }
 
 // Running code from a script or from a string passed on the command line makes the shell run in
