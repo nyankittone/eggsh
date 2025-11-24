@@ -9,15 +9,15 @@ default shell, so I can dog-food it.
   - [X] double quotes
   - [X] backslashes
   - [ ] semicolons
-- [ ] Add proper handling of signals such as SIGINT so that, for example, the shell doesn't close when
+- [X] Add proper handling of signals such as SIGINT so that, for example, the shell doesn't close when
   pressing Ctrl-C
 - [ ] Fix a couple random bugs that I feel like fixing
 - [ ] Fix possible segfault bug in the hash map on small bucket arrays
-- [ ] Consider implementing OSC escape codes into my shelll (I recently discovered what those do lol)
 
 ## 0.0.4
 This release should focus on making the argument parser used in the main function and internal
 commands more robust and complete, and implement a few internal commands using it.
+- [ ] Consider implementing OSC escape codes into my shelll (I recently discovered what those do lol)
 - [ ] Add the `CompoundError` data structure, used mainly for creating and displaying errors in eggsh
   regarding argument parsing
   - [ ] We will also need to make the argument parser actually use this data structure.

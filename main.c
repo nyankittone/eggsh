@@ -1,10 +1,14 @@
+#define _POSIX_C_SOURCE 199309L
+
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <setjmp.h>
 
 #include <tokenizer.h>
 #include <command_runner.h>
@@ -12,6 +16,8 @@
 #include <argument_parser.h>
 #include <shell_types.h>
 #include <misc.h>
+
+jmp_buf sigint_buf;
 
 enum {
     ARG_ID_EGGSH,
@@ -46,6 +52,36 @@ static CommandSchema command_line = {
         NULL_STRUCT
     },
 };
+
+int noSignal(const int signal, struct sigaction *const old_handler) {
+    return sigaction(signal, &(struct sigaction){
+        .sa_handler = SIG_IGN,
+    }, old_handler);
+}
+
+void handleSigint(int sdfsd) {
+    fputc('\n', stderr);
+    signal(SIGINT, &handleSigint);
+    longjmp(sigint_buf, 1);
+}
+
+// I have no idea how to "correctly" do signal handling. This works brilliantly for now, but how
+// would I expose state of the program to a signal handler???
+void setupSignals(void) {
+    noSignal(SIGTERM, NULL);
+    noSignal(SIGQUIT, NULL);
+    noSignal(SIGTTIN, NULL);
+    noSignal(SIGTTOU, NULL);
+    noSignal(SIGTSTP, NULL);
+
+    // sigaction(SIGINT, &(struct sigaction) {
+    //     .sa_handler = &handleSigint,
+    // }, NULL);
+    signal(SIGINT, &handleSigint); // TODO: Figure out how to use sigaction here. for some reason, I
+                                   // can re-install the same signal multiple times with signal, but
+                                   // not with sigaction. Maybe I should look at some of the flags
+                                   // for sigaction.
+}
 
 // Running code from a script or from a string passed on the command line makes the shell run in
 // non-interactive mode. This should be where we have a special flag set indicating that, and the
@@ -156,13 +192,16 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
 
     // I may have to add an extra check to ensure if the file descriptor is stdin.
     if(isatty(file_descriptor)) {
+        setupSignals();
         printVersionInfo(stderr);
 
         RunCommandFromFileReturn result = RUN_COMMAND_CONTINUE;
         while(result != RUN_COMMAND_STOP) {
             if(result == RUN_COMMAND_CONTINUE) {
+                setjmp(sigint_buf);
                 fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
             } else {
+                setjmp(sigint_buf);
                 fputs("\33[1;35m?\33[m ", stderr);
             }
 

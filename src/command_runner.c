@@ -103,6 +103,10 @@ static ExitStatus actuallySpawnCommand(const char *const program_path, char **co
             fputs("oops something went wrong and I didn't feel like doing error handling lmao\n", stderr);
             return NO_EXIT_STATUS;
         case 0:
+            sigaction(SIGINT, &(struct sigaction) {
+                .sa_handler = SIG_DFL,
+            }, NULL);
+
             execv(program_path, parameters);
             perror("Failed to exec");
             exit(255);
