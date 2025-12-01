@@ -54,13 +54,13 @@ static CommandSchema command_line = {
     },
 };
 
-int noSignal(const int signal, struct sigaction *const old_handler) {
+static inline int noSignal(const int signal, struct sigaction *const old_handler) {
     return sigaction(signal, &(struct sigaction){
         .sa_handler = SIG_IGN,
     }, old_handler);
 }
 
-void handleSigint(int sdfsd) {
+static void handleSigint(int sdfsd) {
     fputc('\n', stderr);
     sigaction(SIGINT, &(struct sigaction) {
         .sa_handler = &handleSigint,
@@ -69,9 +69,9 @@ void handleSigint(int sdfsd) {
     longjmp(sigint_buf, 1);
 }
 
-// I have no idea how to "correctly" do signal handling. This works brilliantly for now, but how
-// would I expose state of the program to a signal handler???
-void setupSignals(void) {
+// Properly setting up signal handling that is appropriate for interactive sessions, according to
+// POSIX.
+static void setupSignals(void) {
     noSignal(SIGTERM, NULL);
     noSignal(SIGQUIT, NULL);
     noSignal(SIGTTIN, NULL);

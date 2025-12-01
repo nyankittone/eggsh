@@ -13,19 +13,38 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +55 main.c
-badd +7 todo.md
+badd +83 main.c
+badd +10 todo.md
 badd +1 Makefile
-badd +1 src/command_builder_and_tokenizer.c
-badd +1 include/tokenizer.h
-badd +0 term://~/Programming/Eggsh//396515:/usr/bin/bash
-badd +6 include/testing/tokenizer_runner.h
-badd +23 tests_src/tokenizer_runner.c
+badd +325 src/command_builder_and_tokenizer.c
+badd +84 include/tokenizer.h
+badd +9 include/testing/tokenizer_runner.h
+badd +1 tests_src/tokenizer_runner.c
 badd +194 src/hash_map.c
+badd +97 src/command_runner.c
+badd +0 term://~/Programming/Eggsh//478306:/usr/bin/bash
+badd +681 man://sigaction(2)
+badd +152 man://signal(7)
+badd +75 term://~/Programming/Eggsh//523606:/usr/bin/bash
+badd +1 ~/Source_Code/dash/src/alias.c
+badd +329 ~/Source_Code/dash/src/trap.c
+badd +45 ~/Source_Code/dash/src/main.h
+badd +53 ~/Source_Code/dash/src/options.h
+badd +108 ~/Source_Code/dash/src/options.c
+badd +21 man://sigsetops(3)
+badd +95 ~/Source_Code/dash/src/jobs.h
+badd +61 ~/Source_Code/dash/src/error.h
+badd +92 ~/Source_Code/dash/src/error.c
+badd +1 man://setjmp(3)
+badd +174 ~/Source_Code/dash/src/main.c
+badd +94 ~/Source_Code/dash/src/shell.h
+badd +22 man://sigqueue(3)
+badd +14 man://sigaction(3p)
 argglobal
 %argdel
 $argadd main.c
 set stal=2
+tabnew +setlocal\ bufhidden=wipe
 tabnew +setlocal\ bufhidden=wipe
 tabrewind
 edit include/testing/tokenizer_runner.h
@@ -53,14 +72,14 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe '1resize ' . ((&lines * 12 + 28) / 56)
-exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
-exe '2resize ' . ((&lines * 40 + 28) / 56)
-exe 'vert 2resize ' . ((&columns * 119 + 119) / 238)
-exe '3resize ' . ((&lines * 26 + 28) / 56)
-exe 'vert 3resize ' . ((&columns * 118 + 119) / 238)
-exe '4resize ' . ((&lines * 26 + 28) / 56)
-exe 'vert 4resize ' . ((&columns * 118 + 119) / 238)
+exe '1resize ' . ((&lines * 14 + 28) / 57)
+exe 'vert 1resize ' . ((&columns * 116 + 119) / 238)
+exe '2resize ' . ((&lines * 39 + 28) / 57)
+exe 'vert 2resize ' . ((&columns * 116 + 119) / 238)
+exe '3resize ' . ((&lines * 27 + 28) / 57)
+exe 'vert 3resize ' . ((&columns * 121 + 119) / 238)
+exe '4resize ' . ((&lines * 26 + 28) / 57)
+exe 'vert 4resize ' . ((&columns * 121 + 119) / 238)
 argglobal
 balt tests_src/tokenizer_runner.c
 setlocal foldmethod=manual
@@ -73,19 +92,19 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 11 - ((8 * winheight(0) + 6) / 12)
+let s:l = 1 - ((0 * winheight(0) + 7) / 14)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 11
-normal! 043|
+keepjumps 1
+normal! 011|
 wincmd w
 argglobal
-if bufexists(fnamemodify("tests_src/tokenizer_runner.c", ":p")) | buffer tests_src/tokenizer_runner.c | else | edit tests_src/tokenizer_runner.c | endif
+if bufexists(fnamemodify("main.c", ":p")) | buffer main.c | else | edit main.c | endif
 if &buftype ==# 'terminal'
-  silent file tests_src/tokenizer_runner.c
+  silent file main.c
 endif
-balt src/hash_map.c
+balt include/testing/tokenizer_runner.h
 setlocal foldmethod=manual
 setlocal foldexpr=0
 setlocal foldmarker={{{,}}}
@@ -96,11 +115,11 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 11 - ((9 * winheight(0) + 20) / 40)
+let s:l = 71 - ((16 * winheight(0) + 19) / 39)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 11
+keepjumps 71
 normal! 0
 wincmd w
 argglobal
@@ -118,20 +137,20 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 8 - ((7 * winheight(0) + 13) / 26)
+let s:l = 19 - ((18 * winheight(0) + 13) / 27)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 8
-normal! 016|
+keepjumps 19
+normal! 013|
 lcd ~/Programming/Eggsh
 wincmd w
 argglobal
-if bufexists(fnamemodify("term://~/Programming/Eggsh//396515:/usr/bin/bash", ":p")) | buffer term://~/Programming/Eggsh//396515:/usr/bin/bash | else | edit term://~/Programming/Eggsh//396515:/usr/bin/bash | endif
+if bufexists(fnamemodify("term://~/Programming/Eggsh//478306:/usr/bin/bash", ":p")) | buffer term://~/Programming/Eggsh//478306:/usr/bin/bash | else | edit term://~/Programming/Eggsh//478306:/usr/bin/bash | endif
 if &buftype ==# 'terminal'
-  silent file term://~/Programming/Eggsh//396515:/usr/bin/bash
+  silent file term://~/Programming/Eggsh//478306:/usr/bin/bash
 endif
-balt ~/Programming/Eggsh/Makefile
+balt ~/Programming/Eggsh/todo.md
 setlocal foldmethod=manual
 setlocal foldexpr=0
 setlocal foldmarker={{{,}}}
@@ -140,25 +159,25 @@ setlocal foldlevel=0
 setlocal foldminlines=1
 setlocal foldnestmax=20
 setlocal foldenable
-let s:l = 424 - ((25 * winheight(0) + 13) / 26)
+let s:l = 9027 - ((25 * winheight(0) + 13) / 26)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 424
-normal! 03|
+keepjumps 9027
+normal! 034|
 lcd ~/Programming/Eggsh
 wincmd w
-3wincmd w
-exe '1resize ' . ((&lines * 12 + 28) / 56)
-exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
-exe '2resize ' . ((&lines * 40 + 28) / 56)
-exe 'vert 2resize ' . ((&columns * 119 + 119) / 238)
-exe '3resize ' . ((&lines * 26 + 28) / 56)
-exe 'vert 3resize ' . ((&columns * 118 + 119) / 238)
-exe '4resize ' . ((&lines * 26 + 28) / 56)
-exe 'vert 4resize ' . ((&columns * 118 + 119) / 238)
+2wincmd w
+exe '1resize ' . ((&lines * 14 + 28) / 57)
+exe 'vert 1resize ' . ((&columns * 116 + 119) / 238)
+exe '2resize ' . ((&lines * 39 + 28) / 57)
+exe 'vert 2resize ' . ((&columns * 116 + 119) / 238)
+exe '3resize ' . ((&lines * 27 + 28) / 57)
+exe 'vert 3resize ' . ((&columns * 121 + 119) / 238)
+exe '4resize ' . ((&lines * 26 + 28) / 57)
+exe 'vert 4resize ' . ((&columns * 121 + 119) / 238)
 tabnext
-edit ~/Programming/Eggsh/include/tokenizer.h
+edit ~/Programming/Eggsh/src/command_runner.c
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
@@ -189,19 +208,19 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 1 - ((0 * winheight(0) + 26) / 53)
+let s:l = 97 - ((27 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
-normal! 0
+keepjumps 97
+normal! 021|
 wincmd w
 argglobal
 if bufexists(fnamemodify("~/Programming/Eggsh/src/command_builder_and_tokenizer.c", ":p")) | buffer ~/Programming/Eggsh/src/command_builder_and_tokenizer.c | else | edit ~/Programming/Eggsh/src/command_builder_and_tokenizer.c | endif
 if &buftype ==# 'terminal'
   silent file ~/Programming/Eggsh/src/command_builder_and_tokenizer.c
 endif
-balt ~/Programming/Eggsh/main.c
+balt ~/Programming/Eggsh/include/tokenizer.h
 setlocal foldmethod=manual
 setlocal foldexpr=0
 setlocal foldmarker={{{,}}}
@@ -212,15 +231,64 @@ setlocal foldnestmax=20
 setlocal foldenable
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 534 - ((29 * winheight(0) + 26) / 53)
+let s:l = 208 - ((19 * winheight(0) + 27) / 54)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 534
-normal! 0
+keepjumps 208
+normal! 025|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 118 + 119) / 238)
 exe 'vert 2resize ' . ((&columns * 119 + 119) / 238)
+tabnext
+let s:save_splitbelow = &splitbelow
+let s:save_splitright = &splitright
+set splitbelow splitright
+wincmd _ | wincmd |
+vsplit
+1wincmd h
+wincmd w
+let &splitbelow = s:save_splitbelow
+let &splitright = s:save_splitright
+wincmd t
+let s:save_winminheight = &winminheight
+let s:save_winminwidth = &winminwidth
+set winminheight=0
+set winheight=1
+set winminwidth=0
+set winwidth=1
+exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
+exe 'vert 2resize ' . ((&columns * 118 + 119) / 238)
+argglobal
+enew
+file man://signal(7)
+balt term://~/Programming/Eggsh//478306:/usr/bin/bash
+setlocal foldmethod=manual
+setlocal foldexpr=0
+setlocal foldmarker={{{,}}}
+setlocal foldignore=#
+setlocal foldlevel=0
+setlocal foldminlines=1
+setlocal foldnestmax=20
+setlocal nofoldenable
+lcd ~/Programming/Eggsh
+wincmd w
+argglobal
+enew
+file man://sigaction(2)
+balt man://sigsetops(3)
+setlocal foldmethod=manual
+setlocal foldexpr=0
+setlocal foldmarker={{{,}}}
+setlocal foldignore=#
+setlocal foldlevel=0
+setlocal foldminlines=1
+setlocal foldnestmax=20
+setlocal nofoldenable
+lcd ~/Programming/Eggsh
+wincmd w
+exe 'vert 1resize ' . ((&columns * 119 + 119) / 238)
+exe 'vert 2resize ' . ((&columns * 118 + 119) / 238)
 tabnext 1
 set stal=1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
