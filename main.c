@@ -60,7 +60,7 @@ static inline int noSignal(const int signal, struct sigaction *const old_handler
     }, old_handler);
 }
 
-static void handleSigint(int sdfsd) {
+static void handleSigint(int _) {
     fputc('\n', stderr);
     sigaction(SIGINT, &(struct sigaction) {
         .sa_handler = &handleSigint,
@@ -129,6 +129,8 @@ static RunCommandFromFileReturn runCommandFromFile (
 ) {
     ssize_t buffer_length;
 
+    // Need to add a handle for a command stop without a newline. This may require adding new
+    // return types or doing a refactor...
     TokenizeCommandReturn result = tokenizeBuilderInput(tokenizer);
     if((result & PARSE_COMMAND_HIT_NEWLINE)) {
         if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
@@ -225,6 +227,8 @@ int main(int argc, char *argv[]) {
     char *command_string = NULL;
 
     // parse command line parameters here
+    // This code looks like moon runes after not looking at it for like 2 months...
+    // How was I supposed to do the abstraction here that I wanted to? Variadic function?
     CommandIterator iterator = newParserIterator(argc - 1, argv + 1, &command_line, argv);
     for(CommandIteration iteration; (iteration = parseArgs(&iterator)).status != COMMAND_ITER_DONE;) {
         if(iteration.status == COMMAND_ITER_PARAMETER) switch(iteration.id) {
