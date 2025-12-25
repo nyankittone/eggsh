@@ -140,6 +140,7 @@ ExitStatus executeCommand(CommandRunner *const runner, TokenIterator *const iter
     }
     *pasteRemainingTokens(iterator, runner->command_line_buffer + 1) = NULL;
 
+    // This will stay in at least until my ass learns how to use a debugger
     #ifndef NDEBUG
         for(char **thing = runner->command_line_buffer; *thing; thing++) {
             fprintf(stderr, "\"%s\"\n", *thing);
