@@ -205,7 +205,6 @@ TokenizeCommandReturn tokenizeBuilderInput(Tokenizer *const tokenizer) {
                     tokenizer->lagged_remaining = tokenizer->remaining;
                     return returned;
                 case ';':
-                    fputs("FUCK\n", stderr);
                     addToToken(tokenizer, tokenizer->lagged_remaining, tokenizer->remaining - tokenizer->lagged_remaining);
                     newToken(tokenizer);
                     returned |= PARSE_COMMAND_COMMAND_STOP;

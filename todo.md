@@ -26,6 +26,7 @@ commands more robust and complete, and implement a few internal commands using i
 - [ ] Fix possible segfault bug in the hash map on small bucket arrays
 
 ## Later versions
+- [ ] Fix handling of semicolon
 - [ ] Create more ways to unit test builtin commands
   - [ ] For programs like `pwd`, I'll need to create a mock filesystem that contains directories I can 
     cd into and test with
