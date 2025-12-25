@@ -145,7 +145,6 @@ static RunCommandFromFileReturn runCommandFromFile (
         }
 
         RUN_THE_COMMAND;
-
         return RUN_COMMAND_NEXT_COMMAND;
     }
 
@@ -189,6 +188,8 @@ static RunCommandFromFileReturn runCommandFromFile (
 
     RUN_THE_COMMAND;
     return RUN_COMMAND_NEXT_COMMAND;
+
+    #undef RUN_THE_COMMAND
 }
 
 static void runFile(int file_descriptor, CommandRunner *const runner) {
