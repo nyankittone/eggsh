@@ -1,7 +1,6 @@
 // #define _POSIX_C_SOURCE 199309L
 #define _XOPEN_SOURCE 500
 
-#include <errno.h>
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
@@ -113,11 +112,11 @@ static void runString(char *const string, CommandRunner *const runner) {
     nukeTokenizer(&tokenizer);
 }
 
-typedef enum {
-    RUN_COMMAND_CONTINUE,
-    RUN_COMMAND_STOP,
-    RUN_COMMAND_NEXT_LINE,
-} RunCommandFromFileReturn;
+typedef u8 RunCommandFromFileReturn;
+
+#define RUN_COMMAND_NEXT_COMMAND (1) // Signals the end of a command
+#define RUN_COMMAND_STOP (2) // Signals that we should stop running commands
+#define RUN_COMMAND_NEXT_LINE (4) // Signals that we need a new line
 
 // This code does not correctly handle command stops that are not caused by a line break (eg. a
 // semicolon character). So semicolon characters are not handled the way they should when reading
@@ -132,7 +131,11 @@ static RunCommandFromFileReturn runCommandFromFile (
     // Need to add a handle for a command stop without a newline. This may require adding new
     // return types or doing a refactor...
     TokenizeCommandReturn result = tokenizeBuilderInput(tokenizer);
-    if((result & PARSE_COMMAND_HIT_NEWLINE)) {
+    if((result & PARSE_COMMAND_COMMAND_STOP) && !(result & PARSE_COMMAND_HIT_NEWLINE)) {
+        TokenIterator token_iterator = getTokenIterator(tokenizer);
+        executeCommand(runner, &token_iterator);
+        newCommand(tokenizer);
+    } else if((result & PARSE_COMMAND_HIT_NEWLINE)) {
         if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
             return RUN_COMMAND_NEXT_LINE;
         }
@@ -141,7 +144,7 @@ static RunCommandFromFileReturn runCommandFromFile (
         executeCommand(runner, &token_iterator);
         newCommand(tokenizer);
 
-        return RUN_COMMAND_CONTINUE;
+        return RUN_COMMAND_NEXT_COMMAND;
     }
 
     // This is just a placeholder until proper handling of this case pops up. At the moment, this
@@ -160,6 +163,14 @@ static RunCommandFromFileReturn runCommandFromFile (
         result = tokenizeBuilderInput(tokenizer);
         if(result & PARSE_COMMAND_HIT_NEWLINE) {
             break;
+        }
+
+        if(result & PARSE_COMMAND_COMMAND_STOP) {
+            TokenIterator token_iterator = getTokenIterator(tokenizer);
+            executeCommand(runner, &token_iterator);
+            newCommand(tokenizer);
+
+            continue;
         }
 
         if(result & PARSE_COMMAND_OUT_OF_DATA) {
@@ -181,7 +192,7 @@ static RunCommandFromFileReturn runCommandFromFile (
     executeCommand(runner, &token_iterator);
     newCommand(tokenizer);
 
-    return RUN_COMMAND_CONTINUE;
+    return RUN_COMMAND_NEXT_COMMAND;
 }
 
 static void runFile(int file_descriptor, CommandRunner *const runner) {
@@ -198,9 +209,9 @@ static void runFile(int file_descriptor, CommandRunner *const runner) {
         setupSignals();
         printVersionInfo(stderr);
 
-        RunCommandFromFileReturn result = RUN_COMMAND_CONTINUE;
+        RunCommandFromFileReturn result = RUN_COMMAND_NEXT_COMMAND;
         while(result != RUN_COMMAND_STOP) {
-            if(result == RUN_COMMAND_CONTINUE) {
+            if(result == RUN_COMMAND_NEXT_COMMAND) {
                 setjmp(sigint_buf);
                 fprintf(stderr, "\33[1;35m%s >\33[m ", resources.working_directory);
             } else {

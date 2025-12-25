@@ -4,15 +4,13 @@
 The major goal of this release is to get eggsh into the minimal viable state needed for making it my
 default shell, so I can dog-food it.
 - [X] Add multi-line command support
-- [O] Add parsing for single and double quotes, backslashes, and semicolons
+- [X] Add parsing for single and double quotes, backslashes, and semicolons
   - [X] single quotes
   - [X] double quotes
   - [X] backslashes
-  - [ ] semicolons
+  - [X] semicolons
 - [X] Add proper handling of signals such as SIGINT so that, for example, the shell doesn't close when
   pressing Ctrl-C
-- [ ] Fix a couple random bugs that I feel like fixing
-- [ ] Fix possible segfault bug in the hash map on small bucket arrays
 
 ## 0.0.4
 This release should focus on making the argument parser used in the main function and internal
@@ -24,6 +22,8 @@ commands more robust and complete, and implement a few internal commands using i
 - [ ] Clean up the code needed in a command's "main" function to make it more pleasing to write
 - [ ] Implement the `printf` command
 - [ ] Implement a command for generating random numbers
+- [ ] Fix a couple random bugs that I feel like fixing
+- [ ] Fix possible segfault bug in the hash map on small bucket arrays
 
 ## Later versions
 - [ ] Create more ways to unit test builtin commands
