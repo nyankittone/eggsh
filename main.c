@@ -112,11 +112,11 @@ static void runString(char *const string, CommandRunner *const runner) {
     nukeTokenizer(&tokenizer);
 }
 
-typedef u8 RunCommandFromFileReturn;
-
-#define RUN_COMMAND_NEXT_COMMAND (1) // Signals the end of a command
-#define RUN_COMMAND_STOP (2) // Signals that we should stop running commands
-#define RUN_COMMAND_NEXT_LINE (4) // Signals that we need a new line
+typedef enum {
+    RUN_COMMAND_NEXT_COMMAND,
+    RUN_COMMAND_STOP,
+    RUN_COMMAND_NEXT_LINE,
+} RunCommandFromFileReturn;
 
 // This code does not correctly handle command stops that are not caused by a line break (eg. a
 // semicolon character). So semicolon characters are not handled the way they should when reading
