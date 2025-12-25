@@ -128,21 +128,23 @@ static RunCommandFromFileReturn runCommandFromFile (
 ) {
     ssize_t buffer_length;
 
+    #define RUN_THE_COMMAND { \
+        TokenIterator token_iterator = getTokenIterator(tokenizer); \
+        executeCommand(runner, &token_iterator); \
+        newCommand(tokenizer); \
+    }
+
     // Need to add a handle for a command stop without a newline. This may require adding new
     // return types or doing a refactor...
     TokenizeCommandReturn result = tokenizeBuilderInput(tokenizer);
     if((result & PARSE_COMMAND_COMMAND_STOP) && !(result & PARSE_COMMAND_HIT_NEWLINE)) {
-        TokenIterator token_iterator = getTokenIterator(tokenizer);
-        executeCommand(runner, &token_iterator);
-        newCommand(tokenizer);
+        RUN_THE_COMMAND;
     } else if((result & PARSE_COMMAND_HIT_NEWLINE)) {
         if(!(result & PARSE_COMMAND_COMMAND_STOP)) {
             return RUN_COMMAND_NEXT_LINE;
         }
 
-        TokenIterator token_iterator = getTokenIterator(tokenizer);
-        executeCommand(runner, &token_iterator);
-        newCommand(tokenizer);
+        RUN_THE_COMMAND;
 
         return RUN_COMMAND_NEXT_COMMAND;
     }
@@ -166,9 +168,7 @@ static RunCommandFromFileReturn runCommandFromFile (
         }
 
         if(result & PARSE_COMMAND_COMMAND_STOP) {
-            TokenIterator token_iterator = getTokenIterator(tokenizer);
-            executeCommand(runner, &token_iterator);
-            newCommand(tokenizer);
+            RUN_THE_COMMAND;
 
             continue;
         }
@@ -187,11 +187,7 @@ static RunCommandFromFileReturn runCommandFromFile (
         return RUN_COMMAND_NEXT_LINE;
     }
 
-    // run a command
-    TokenIterator token_iterator = getTokenIterator(tokenizer);
-    executeCommand(runner, &token_iterator);
-    newCommand(tokenizer);
-
+    RUN_THE_COMMAND;
     return RUN_COMMAND_NEXT_COMMAND;
 }
 
